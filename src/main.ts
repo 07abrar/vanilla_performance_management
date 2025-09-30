@@ -1,4 +1,4 @@
-import './styles.css';
+import './style.css';
 import { initRouter, navigate } from './router';
 import { loadActivities, loadTracks, loadUsers } from './store';
 import { renderDatabaseView } from './views/database';
