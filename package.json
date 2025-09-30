@@ -1,0 +1,22 @@
+{
+  "name": "vanilla_performance_management_frontend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/07abrar/vanilla_performance_management_frontend.git",
+  "author": "Ghulam Abrar <gh_abrar51@yahoo.co.id>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.7"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "chart.js": "^4.5.0",
+    "dayjs": "^1.11.18"
+  }
+}
