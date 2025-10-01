@@ -7,7 +7,7 @@ import {
   RecapOut,
   Track,
   User
-} from '../types';
+} from '../type';
 
 const BASE_URL = 'http://localhost:8000/api';
 

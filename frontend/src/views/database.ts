@@ -13,12 +13,20 @@ import { Activity, User } from '../type';
 import { createButton, createCard, el, renderList, setChildren, showMessage } from '../ui/dom';
 
 export function renderDatabaseView(container: HTMLElement): () => void {
-  const grid = el('div', { className: 'grid' });
-  container.replaceChildren(grid);
+  const page = el('div', { className: 'page' });
+  const pageHeader = el('div', { className: 'page-header' }, [
+    el('h2', { textContent: 'Database' }),
+    el('p', { className: 'page-subtitle', textContent: 'Manage users and activities list.' })
+  ]);
+
+  const grid = el('div', { className: 'dashboard-grid' });
+  page.append(pageHeader, grid);
+  container.replaceChildren(page);
 
   const usersCard = buildEntityCard<User>({
     title: 'Users',
-    placeholder: 'Add a new user',
+    subtitle: 'User name to be tracked.',
+    placeholder: 'User name',
     stateSelector: getUsersState,
     onCreate: (name) => createUser({ name }),
     onDelete: (id) => deleteUser(id)
@@ -26,7 +34,8 @@ export function renderDatabaseView(container: HTMLElement): () => void {
 
   const activitiesCard = buildEntityCard<Activity>({
     title: 'Activities',
-    placeholder: 'Add a new activity',
+    subtitle: 'Activity name to be tracked.',
+    placeholder: 'Activity name',
     stateSelector: getActivitiesState,
     onCreate: (name) => createActivity({ name }),
     onDelete: (id) => deleteActivity(id)
@@ -54,6 +63,7 @@ export function renderDatabaseView(container: HTMLElement): () => void {
 
 interface EntityCardOptions<T> {
   title: string;
+  subtitle: string;
   placeholder: string;
   stateSelector: () => { data: T[]; isLoading: boolean; error: string | null };
   onCreate: (name: string) => Promise<void>;
@@ -61,32 +71,28 @@ interface EntityCardOptions<T> {
 }
 
 function buildEntityCard<T extends { id: number; name: string }>(options: EntityCardOptions<T>) {
-  const card = createCard(options.title);
+  const section = createCard('data-card');
+  const header = el('div', { className: 'card-header' }, [
+    el('h3', { className: 'section-title', textContent: options.title }),
+    el('p', { className: 'card-subtitle', textContent: options.subtitle })
+  ]);
+
   const form = document.createElement('form');
-  form.className = 'entity-form';
+  form.className = 'form-row';
   form.autocomplete = 'off';
 
   const input = document.createElement('input');
+  input.type = 'text';
   input.placeholder = options.placeholder;
 
-  const button = createButton('Add', 'primary', { type: 'submit' });
+  const submitButton = createButton('Add', 'primary', { type: 'submit' });
 
-  const controls = el('div', { className: 'inputs-inline' });
-  const inputWrapper = el('div');
-  inputWrapper.append(input);
-  const buttonWrapper = el('div');
-  buttonWrapper.style.maxWidth = '160px';
-  buttonWrapper.append(button);
-  controls.append(inputWrapper, buttonWrapper);
+  form.append(input, submitButton);
 
-  form.append(controls);
-
-  const feedback = el('div');
-  form.append(feedback);
-
+  const feedback = el('p', { className: 'status-message' });
   const listContainer = el('div');
 
-  card.append(form, listContainer);
+  section.append(header, form, feedback, el('div', { className: 'card-divider' }), listContainer);
 
   let isSubmitting = false;
   const deletingIds = new Set<number>();
@@ -97,7 +103,7 @@ function buildEntityCard<T extends { id: number; name: string }>(options: Entity
     const trimmed = input.value.trim();
     if (!trimmed) return;
     isSubmitting = true;
-    button.disabled = true;
+    submitButton.disabled = true;
     input.disabled = true;
     showMessage(feedback, null, 'success');
     try {
@@ -108,7 +114,7 @@ function buildEntityCard<T extends { id: number; name: string }>(options: Entity
       showMessage(feedback, (error as Error).message, 'error');
     } finally {
       isSubmitting = false;
-      button.disabled = false;
+      submitButton.disabled = false;
       input.disabled = false;
     }
   };
@@ -118,15 +124,17 @@ function buildEntityCard<T extends { id: number; name: string }>(options: Entity
   const renderListItems = () => {
     const state = options.stateSelector();
     if (state.isLoading) {
-      setChildren(listContainer, [el('div', { className: 'loading-skeleton' })]);
+      setChildren(listContainer, [el('div', { className: 'skeleton' })]);
       return;
     }
     if (state.error) {
-      setChildren(listContainer, [el('div', { className: 'error-text', textContent: state.error })]);
+      setChildren(listContainer, [
+        el('p', { className: 'status-message status-error', textContent: state.error })
+      ]);
       return;
     }
     renderList(listContainer, state.data, (item) => {
-      const row = el('div', { className: 'list-item' });
+      const row = el('div', { className: 'item' });
       const name = el('span', { textContent: item.name });
       const deleteBtn = createButton('Delete', 'danger');
       deleteBtn.disabled = deletingIds.has(item.id);
@@ -151,7 +159,7 @@ function buildEntityCard<T extends { id: number; name: string }>(options: Entity
   };
 
   return {
-    element: card,
+    element: section,
     refresh: renderListItems,
     cleanup: () => {
       form.removeEventListener('submit', handleSubmit);

@@ -45,7 +45,14 @@ function onLinkClick(event: MouseEvent): void {
 function updateActiveLinks(): void {
   document.querySelectorAll('nav a').forEach((link) => {
     if (!(link instanceof HTMLAnchorElement)) return;
-    link.classList.toggle('active', link.pathname === currentPath);
+    const isActive = link.pathname === currentPath;
+    if (isActive) {
+      link.classList.add('nav-link-active');
+      link.setAttribute('aria-current', 'page');
+    } else {
+      link.classList.remove('nav-link-active');
+      link.removeAttribute('aria-current');
+    }
   });
 }
 

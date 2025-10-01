@@ -27,20 +27,24 @@ export function setChildren(parent: HTMLElement, children: (HTMLElement | Text)[
 
 export function createButton(
   label: string,
-  className = '',
+  variant: 'primary' | 'danger' | 'ghost' = 'ghost',
   options: { type?: 'button' | 'submit'; disabled?: boolean } = {}
 ): HTMLButtonElement {
   const button = document.createElement('button');
   button.type = options.type ?? 'button';
   button.textContent = label;
-  button.className = className;
+  const classes: string[] = [];
+  if (variant === 'primary') classes.push('primary-button');
+  if (variant === 'danger') classes.push('danger-button');
+  button.className = classes.join(' ');
   if (options.disabled) button.disabled = true;
   return button;
 }
 
-export function createCard(title: string): HTMLElement {
-  const header = el('h2', { textContent: title });
-  return el('div', { className: 'card' }, [header]);
+export function createCard(className = ''): HTMLElement {
+  const card = document.createElement('section');
+  card.className = ['card', className].filter(Boolean).join(' ');
+  return card;
 }
 
 export function renderList<T>(
@@ -49,33 +53,25 @@ export function renderList<T>(
   renderItem: (item: T) => HTMLElement
 ): void {
   if (!items.length) {
-    setChildren(container, [el('div', { className: 'empty-state muted', textContent: 'Nothing here yet.' })]);
+    setChildren(container, [el('p', { className: 'empty-state', textContent: 'No items yet.' })]);
     return;
   }
   const list = el('div', { className: 'list' }, items.map((item) => renderItem(item)));
   setChildren(container, [list]);
 }
 
-export function showMessage(container: HTMLElement, message: string | null, type: 'error' | 'success'): void {
+export function showMessage(
+  container: HTMLElement,
+  message: string | null,
+  type: 'error' | 'success'
+): void {
   if (!message) {
     container.textContent = '';
-    container.className = '';
+    container.className = 'status-message';
     return;
   }
   container.textContent = message;
-  container.className = type === 'error' ? 'error-text' : 'success-text';
-}
-
-export function createField(labelText: string, input: HTMLElement, helper?: HTMLElement): HTMLElement {
-  const label = el('label', { className: 'field-label', textContent: labelText });
-  label.append(input);
-  const wrapperChildren: (HTMLElement | Text)[] = [label];
-  if (helper) {
-    const helperWrapper = el('div');
-    helperWrapper.append(helper);
-    wrapperChildren.push(helperWrapper);
-  }
-  return el('div', {}, wrapperChildren);
+  container.className = `status-message ${type === 'error' ? 'status-error' : 'status-success'}`;
 }
 
 export function formatMinutes(minutes: number): string {

@@ -27,9 +27,22 @@ interface FormState {
 }
 
 export function renderTracksView(container: HTMLElement): () => void {
-  const card = createCard('Create a track');
+  const page = el('div', { className: 'page' });
+  const pageHeader = el('div', { className: 'page-header' }, [
+    el('h2', { textContent: 'Tracks' }),
+    el('p', { className: 'page-subtitle', textContent: 'Input what have been done today.' })
+  ]);
+
+  const card = createCard('data-card');
+  const createHeader = el('div', { className: 'card-header' }, [
+    el('h3', { className: 'section-title', textContent: 'Create a track' }),
+    el('p', { className: 'card-subtitle', textContent: 'Input activities.' })
+  ]);
+
   const form = document.createElement('form');
   form.className = 'track-form';
+
+  const formGrid = el('div', { className: 'form-grid' });
 
   const today = dayjs();
   const startDefault = roundToNextFive(dayjs());
@@ -48,33 +61,43 @@ export function renderTracksView(container: HTMLElement): () => void {
   commentInput.placeholder = 'Optional comment';
   commentInput.rows = 2;
 
-  const submitButton = createButton('Create track', 'primary', { type: 'submit' });
+  const errorDate = el('div', { className: 'err' });
+  const errorStart = el('div', { className: 'err' });
+  const errorEnd = el('div', { className: 'err' });
+  const errorUser = el('div', { className: 'err' });
+  const errorActivity = el('div', { className: 'err' });
 
-  const errorDate = el('div', { className: 'error-text' });
-  const errorStart = el('div', { className: 'error-text' });
-  const errorEnd = el('div', { className: 'error-text' });
-  const errorUser = el('div', { className: 'error-text' });
-  const errorActivity = el('div', { className: 'error-text' });
-  const feedback = el('div');
-
-  const fields = el('div', { className: 'inputs-inline' });
-  fields.append(
-    createFieldWrapper('Date', dateInput, errorDate),
-    createFieldWrapper('Start time', startSelect, errorStart),
-    createFieldWrapper('End time', endSelect, errorEnd),
-    createFieldWrapper('User', userSelect, errorUser),
-    createFieldWrapper('Activity', activitySelect, errorActivity),
-    createFieldWrapper('Comment', commentInput)
+  formGrid.append(
+    createControl('Date', dateInput, errorDate),
+    createControl('Start time', startSelect, errorStart),
+    createControl('End time', endSelect, errorEnd),
+    createControl('User', userSelect, errorUser),
+    createControl('Activity', activitySelect, errorActivity),
+    createControl('Comment', commentInput, null, true)
   );
 
-  form.append(fields, submitButton, feedback);
-  card.append(form);
+  const actions = el('div', { className: 'form-actions' });
+  const submitButton = createButton('Create track', 'primary', { type: 'submit' });
+  actions.append(submitButton);
 
-  const tableCard = createCard('Existing tracks');
+  const feedback = el('p', { className: 'status-message' });
+  const messages = el('div', { className: 'form-messages' }, [feedback]);
+
+  form.append(formGrid, actions, messages);
+
+  const divider = el('div', { className: 'card-divider' });
+
+  const listHeader = el('div', { className: 'card-header' }, [
+    el('h3', { className: 'section-title', textContent: 'Existing tracks' }),
+    el('p', { className: 'card-subtitle', textContent: 'List of activities that have been done.' })
+  ]);
+
   const tableWrapper = el('div', { className: 'table-wrapper' });
-  tableCard.append(tableWrapper);
 
-  container.replaceChildren(card, tableCard);
+  card.append(createHeader, form, divider, listHeader, tableWrapper);
+
+  page.append(pageHeader, card);
+  container.replaceChildren(page);
 
   const formState: FormState = {
     date: dateInput.value,
@@ -134,6 +157,7 @@ export function renderTracksView(container: HTMLElement): () => void {
 
     submitButton.disabled = true;
     feedback.textContent = '';
+    feedback.className = 'status-message';
 
     const startDateTime = dayjs(`${formState.date}T${formState.start}`);
     const endDateTime = dayjs(`${formState.date}T${formState.end}`);
@@ -156,11 +180,9 @@ export function renderTracksView(container: HTMLElement): () => void {
       const resolvedEnd = nextEnd.isAfter(dayEnd) ? dayEnd : nextEnd;
       startSelect.value = resolvedStart.format('HH:mm');
       endSelect.value = resolvedEnd.format('HH:mm');
-      feedback.className = 'success-text';
-      feedback.textContent = 'Track created!';
+      showSuccess(feedback, 'Track created!');
     } catch (error) {
-      feedback.className = 'error-text';
-      feedback.textContent = (error as Error).message;
+      showError(feedback, (error as Error).message);
     } finally {
       submitButton.disabled = false;
     }
@@ -174,26 +196,32 @@ export function renderTracksView(container: HTMLElement): () => void {
     const tracksState = getTracksState();
 
     if (tracksState.isLoading) {
-      setChildren(tableWrapper, [el('div', { className: 'loading-skeleton' })]);
+      setChildren(tableWrapper, [el('div', { className: 'skeleton' })]);
       return;
     }
 
     if (tracksState.error) {
-      setChildren(tableWrapper, [el('div', { className: 'error-text', textContent: tracksState.error })]);
+      setChildren(tableWrapper, [
+        el('p', { className: 'status-message status-error', textContent: tracksState.error })
+      ]);
       return;
     }
 
     if (!tracksState.data.length) {
-      setChildren(tableWrapper, [el('div', { className: 'empty-state', textContent: 'No tracks yet.' })]);
+      setChildren(tableWrapper, [el('p', { className: 'empty-state', textContent: 'No tracks yet.' })]);
       return;
     }
 
     const table = document.createElement('table');
+    table.className = 'data-table';
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
     ['Date', 'Start', 'End', 'Duration', 'User', 'Activity', 'Comment', ''].forEach((heading) => {
       const th = document.createElement('th');
       th.textContent = heading;
+      if (heading === '') {
+        th.classList.add('text-right');
+      }
       headerRow.appendChild(th);
     });
     thead.appendChild(headerRow);
@@ -217,13 +245,14 @@ export function renderTracksView(container: HTMLElement): () => void {
       appendCell(row, getActivityName(track.activity_id));
       appendCell(row, track.comment ?? '—');
       const actionCell = document.createElement('td');
+      actionCell.className = 'text-right';
       const deleteBtn = createButton('Delete', 'danger');
       deleteBtn.addEventListener('click', async () => {
         deleteBtn.disabled = true;
         try {
           await deleteTrack(track.id);
         } catch (error) {
-          alert((error as Error).message);
+          showError(feedback, (error as Error).message);
         } finally {
           deleteBtn.disabled = false;
         }
@@ -283,11 +312,28 @@ function populateSelect(select: HTMLSelectElement, items: (User | Activity)[], t
   }
 }
 
-function createFieldWrapper(label: string, input: HTMLElement, helper?: HTMLElement): HTMLElement {
-  const wrapper = el('div');
-  const labelElement = el('label', { textContent: label });
-  labelElement.append(input);
-  wrapper.append(labelElement);
+function createControl(
+  label: string,
+  input: HTMLElement,
+  helper?: HTMLElement | null,
+  optional = false
+): HTMLElement {
+  const wrapper = el('label', { className: 'control' });
+  const labelText = el('span', { className: 'control-label', textContent: label });
+  if (optional) {
+    labelText.append(el('span', { className: 'control-optional', textContent: ' (optional)' }));
+  }
+  wrapper.append(labelText, input);
   if (helper) wrapper.append(helper);
   return wrapper;
+}
+
+function showSuccess(target: HTMLElement, message: string): void {
+  target.textContent = message;
+  target.className = 'status-message status-success';
+}
+
+function showError(target: HTMLElement, message: string): void {
+  target.textContent = message;
+  target.className = 'status-message status-error';
 }
