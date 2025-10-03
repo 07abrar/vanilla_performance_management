@@ -196,52 +196,63 @@ def recap_view(request, mode):
             start_time__gte=start_date, start_time__lt=end_date
         ).select_related("user", "activity")
 
-        # Calculate activity statistics
+        # Calculate activity statistics keyed by activity id
         activity_stats = {}
-        total_minutes = 0
+        total_minutes = 0.0
 
         for track in tracks:
+            activity_id = track.activity.id
             activity_name = track.activity.name
             # Calculate duration in minutes
-            duration_seconds = (track.end_time - track.start_time).total_seconds()
-            duration_minutes = duration_seconds / 60
+            duration_minutes = (
+                track.end_time - track.start_time
+            ).total_seconds() / 60.0
 
-            if activity_name not in activity_stats:
-                activity_stats[activity_name] = {
-                    "activity": activity_name,
-                    "minutes": 0,
-                    "percentage": 0,
+            if activity_id not in activity_stats:
+                activity_stats[activity_id] = {
+                    "activity_id": activity_id,
+                    "activity_name": activity_name,
+                    "minutes": 0.0,
                 }
 
-            activity_stats[activity_name]["minutes"] += duration_minutes
+            activity_stats[activity_id]["minutes"] += duration_minutes
             total_minutes += duration_minutes
 
-        # Calculate percentages
-        activities_list = []
-        for activity_data in activity_stats.values():
+        # Prepare entries sorted by the time spent per activity
+        entries = []
+        for data in activity_stats.values():
             if total_minutes > 0:
-                percentage = (activity_data["minutes"] / total_minutes) * 100
+                percentage = (data["minutes"] / total_minutes) * 100
             else:
-                percentage = 0
+                percentage = 0.0
 
-            activities_list.append(
+            entries.append(
                 {
-                    "activity": activity_data["activity"],
-                    "minutes": round(activity_data["minutes"], 2),
+                    "activity_id": data["activity_id"],
+                    "activity_name": data["activity_name"],
+                    "minutes": round(data["minutes"], 2),
                     "percentage": round(percentage, 2),
                 }
             )
 
-        # Sort by minutes descending
-        activities_list.sort(key=lambda x: x["minutes"], reverse=True)
+        entries.sort(key=lambda value: value["minutes"], reverse=True)
 
-        # Format response as RecapOut structure
+        # Build a descriptive label for the selected period
+        if mode == "daily":
+            label = start_date.strftime("%Y-%m-%d")
+        elif mode == "weekly":
+            end_display = (end_date - timedelta(days=1)).strftime("%Y-%m-%d")
+            label = f"{start_date.strftime('%Y-%m-%d')} → {end_display}"
+        else:  # monthly
+            label = start_date.strftime("%B %Y")
+
         response_data = {
             "mode": mode,
-            "period": {"start": start_date.isoformat(), "end": end_date.isoformat()},
+            "label": label,
+            "start": start_date.isoformat(),
+            "end": end_date.isoformat(),
             "total_minutes": round(total_minutes, 2),
-            "activities": activities_list,
-            "tracks_count": tracks.count(),
+            "entries": entries,
         }
 
         return Response(response_data)

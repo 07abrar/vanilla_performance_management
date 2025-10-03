@@ -25,6 +25,19 @@ class ActivitySerializer(serializers.ModelSerializer):
 class TrackSerializer(serializers.ModelSerializer):
     """Serializer for Track model"""
 
+    # Accept foreign keys via their primary keys when creating a track
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), write_only=True
+    )
+    activity = serializers.PrimaryKeyRelatedField(
+        queryset=Activity.objects.all(), write_only=True
+    )
+
+    # Expose the related objects and IDs in the response
+    user_detail = UserSerializer(source="user", read_only=True)
+    activity_detail = ActivitySerializer(source="activity", read_only=True)
+    user_id = serializers.IntegerField(source="user.id", read_only=True)
+    activity_id = serializers.IntegerField(source="activity.id", read_only=True)
     duration = serializers.ReadOnlyField()
 
     class Meta:
@@ -32,7 +45,11 @@ class TrackSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "user",
+            "user_id",
+            "user_detail",
             "activity",
+            "activity_id",
+            "activity_detail",
             "start_time",
             "end_time",
             "comment",
@@ -40,7 +57,16 @@ class TrackSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "duration", "created_at", "updated_at"]
+        read_only_fields = [
+            "id",
+            "user_id",
+            "user_detail",
+            "activity_id",
+            "activity_detail",
+            "duration",
+            "created_at",
+            "updated_at",
+        ]
 
 
 class TrackDetailSerializer(serializers.ModelSerializer):
