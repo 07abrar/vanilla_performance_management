@@ -12,7 +12,6 @@ from .serializers import (
     UserSerializer,
     ActivitySerializer,
     TrackSerializer,
-    TrackDetailSerializer,
 )
 
 
@@ -79,13 +78,11 @@ class ActivityViewSet(viewsets.ModelViewSet):
 class TrackViewSet(viewsets.ModelViewSet):
     """ViewSet for Track model - supports list, create, retrieve, update, delete"""
 
-    queryset = Track.objects.all()
-
-    def get_serializer_class(self):
-        """Return detailed serializer for list/retrieve, simple for create/update"""
-        if self.action in ["list", "retrieve"]:
-            return TrackDetailSerializer
-        return TrackSerializer
+    queryset = Track.objects.select_related("user", "activity")
+    # Use the same serializer for every action so the frontend receives the
+    # user_id/activity_id fields regardless of whether the data comes from a
+    # list or create response.
+    serializer_class = TrackSerializer
 
     def list(self, request):
         """List all tracks with user and activity details"""
