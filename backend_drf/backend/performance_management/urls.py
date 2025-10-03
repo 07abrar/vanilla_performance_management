@@ -1,18 +1,16 @@
-# NOTE: After creating viewsets, create URL routes for User, Activity, and Track viewsets
+# NOTE: DRF routers automatically create RESTful URL patterns for our viewsets.
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
 from .views import UserViewSet, ActivityViewSet, TrackViewSet, recap_view
 
 router = DefaultRouter()
-router.register(r'users', UserViewSet)
-router.register(r'activities', ActivityViewSet)
-router.register(r'tracks', TrackViewSet)
+router.register(r"users", UserViewSet)
+router.register(r"activities", ActivityViewSet)
+router.register(r"tracks", TrackViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),
-    path('recap/<str:mode>/', recap_view, name='recap'),
+    path("", include(router.urls)),
+    path("recap/<str:mode>/", recap_view, name="recap"),
 ]
 
-# NOTE: After creating this file, include these URLs in the main project's urls.py
+# NOTE: Include these app routes from backend/urls.py so the API lives under /api/.
