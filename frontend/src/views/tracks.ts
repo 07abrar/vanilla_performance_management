@@ -164,8 +164,8 @@ export function renderTracksView(container: HTMLElement): () => void {
 
     try {
       await createTrack({
-        user_id: Number(formState.userId),
-        activity_id: Number(formState.activityId),
+        user: Number(formState.userId),
+        activity: Number(formState.activityId),
         start_time: startDateTime.toISOString(),
         end_time: endDateTime.toISOString(),
         comment: formState.comment.trim() ? formState.comment.trim() : undefined

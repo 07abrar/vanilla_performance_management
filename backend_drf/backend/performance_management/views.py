@@ -131,6 +131,12 @@ def recap_view(request, mode):
             if date_param:
                 # Parse date parameter (YYYY-MM-DD format)
                 target_date = datetime.fromisoformat(date_param.replace("Z", "+00:00"))
+                if timezone.is_naive(target_date):
+                    target_date = timezone.make_aware(target_date)
+                else:
+                    target_date = target_date.astimezone(
+                        timezone.get_current_timezone()
+                    )
                 start_date = target_date.replace(
                     hour=0, minute=0, second=0, microsecond=0
                 )
@@ -144,6 +150,10 @@ def recap_view(request, mode):
                 start_date = datetime.fromisoformat(
                     week_start_param.replace("Z", "+00:00")
                 )
+                if timezone.is_naive(start_date):
+                    start_date = timezone.make_aware(start_date)
+                else:
+                    start_date = start_date.astimezone(timezone.get_current_timezone())
                 start_date = start_date.replace(
                     hour=0, minute=0, second=0, microsecond=0
                 )

@@ -44,8 +44,8 @@ export interface CreateActivityPayload {
 }
 
 export interface CreateTrackPayload {
-  user_id: number;
-  activity_id: number;
+  user: number;
+  activity: number;
   start_time: string;
   end_time: string;
   comment?: string | null;
