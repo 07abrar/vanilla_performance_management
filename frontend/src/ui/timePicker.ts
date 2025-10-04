@@ -1,35 +1,66 @@
 import dayjs from 'dayjs';
 
-function generateTimeOptions(): string[] {
-  const options: string[] = [];
-  for (let minutes = 0; minutes < 24 * 60; minutes += 5) {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    options.push(`${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`);
-  }
-  return options;
+const MINUTE_STEP = 15;
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, index) => String(index).padStart(2, '0'));
+const MINUTE_OPTIONS = Array.from({ length: 60 / MINUTE_STEP }, (_, index) =>
+  String(index * MINUTE_STEP).padStart(2, '0')
+);
+
+export interface TimePickerControl {
+  element: HTMLDivElement;
+  getValue(): string;
+  setValue(value: string): void;
 }
 
-const TIME_OPTIONS = generateTimeOptions();
+export function createTimePicker(defaultValue: string): TimePickerControl {
+  const container = document.createElement('div');
+  container.className = 'time-picker';
 
-export function createTimeSelect(defaultValue: string): HTMLSelectElement {
-  const select = document.createElement('select');
-  TIME_OPTIONS.forEach((time) => {
+  const hourSelect = document.createElement('select');
+  hourSelect.className = 'time-picker-hour';
+  HOUR_OPTIONS.forEach((hour) => {
     const option = document.createElement('option');
-    option.value = time;
-    option.textContent = time;
-    if (time === defaultValue) {
-      option.selected = true;
-    }
-    select.append(option);
+    option.value = hour;
+    option.textContent = hour;
+    hourSelect.append(option);
   });
-  return select;
+
+  const minuteSelect = document.createElement('select');
+  minuteSelect.className = 'time-picker-minute';
+  MINUTE_OPTIONS.forEach((minute) => {
+    const option = document.createElement('option');
+    option.value = minute;
+    option.textContent = minute;
+    minuteSelect.append(option);
+  });
+
+  const separator = document.createElement('span');
+  separator.className = 'time-picker-separator';
+  separator.textContent = ':';
+
+  container.append(hourSelect, separator, minuteSelect);
+
+  const setValue = (value: string) => {
+    const [hour, minute] = value.split(':');
+    hourSelect.value = HOUR_OPTIONS.includes(hour) ? hour : HOUR_OPTIONS[0];
+    minuteSelect.value = MINUTE_OPTIONS.includes(minute) ? minute : MINUTE_OPTIONS[0];
+  };
+
+  setValue(defaultValue);
+
+  return {
+    element: container,
+    getValue: () => `${hourSelect.value}:${minuteSelect.value}`,
+    setValue
+  };
 }
 
-export function roundToNextFive(date: dayjs.Dayjs): dayjs.Dayjs {
-  const remainder = date.minute() % 5;
-  if (remainder === 0 && date.second() === 0) return date;
-  return date.add(5 - remainder, 'minute').startOf('minute');
+export function roundToNextQuarterHour(date: dayjs.Dayjs): dayjs.Dayjs {
+  const remainder = date.minute() % MINUTE_STEP;
+  if (remainder === 0 && date.second() === 0) {
+    return date.startOf('minute');
+  }
+  return date.add(MINUTE_STEP - remainder, 'minute').startOf('minute');
 }
 
 export function addMinutes(time: string, minutes: number): string {

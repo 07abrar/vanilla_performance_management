@@ -28,7 +28,7 @@ function createAppShell(): AppShell {
     el('h1', { className: 'app-title', textContent: 'Performance Management' }),
     el('p', {
       className: 'app-tagline',
-      textContent: "Monitor your team's database, tracks, and recap analytics."
+      textContent: "Monitor my daily activities"
     })
   );
 

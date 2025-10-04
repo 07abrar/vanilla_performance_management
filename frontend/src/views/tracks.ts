@@ -14,7 +14,7 @@ import {
 } from '../store';
 import { Activity, Track, User } from '../type';
 import { createButton, createCard, el, formatMinutes, setChildren } from '../ui/dom';
-import { createTimeSelect, roundToNextFive, toMinutes } from '../ui/timePicker';
+import { createTimePicker, roundToNextQuarterHour, toMinutes } from '../ui/timePicker';
 
 interface FormState {
   date: string;
@@ -45,15 +45,15 @@ export function renderTracksView(container: HTMLElement): () => void {
   const formGrid = el('div', { className: 'form-grid' });
 
   const today = dayjs();
-  const startDefault = roundToNextFive(dayjs());
+  const startDefault = roundToNextQuarterHour(dayjs());
   const endDefault = startDefault.add(1, 'hour');
 
   const dateInput = document.createElement('input');
   dateInput.type = 'date';
   dateInput.value = today.format('YYYY-MM-DD');
 
-  const startSelect = createTimeSelect(startDefault.format('HH:mm'));
-  const endSelect = createTimeSelect(endDefault.format('HH:mm'));
+    const startTimePicker = createTimePicker(startDefault.format('HH:mm'));
+  const endTimePicker = createTimePicker(endDefault.format('HH:mm'));
 
   const userSelect = document.createElement('select');
   const activitySelect = document.createElement('select');
@@ -67,14 +67,23 @@ export function renderTracksView(container: HTMLElement): () => void {
   const errorUser = el('div', { className: 'err' });
   const errorActivity = el('div', { className: 'err' });
 
-  formGrid.append(
+  const firstRow = el('div', { className: 'form-row form-row-3' });
+  firstRow.append(
     createControl('Date', dateInput, errorDate),
-    createControl('Start time', startSelect, errorStart),
-    createControl('End time', endSelect, errorEnd),
     createControl('User', userSelect, errorUser),
-    createControl('Activity', activitySelect, errorActivity),
-    createControl('Comment', commentInput, null, true)
+    createControl('Activity', activitySelect, errorActivity)
   );
+
+  const secondRow = el('div', { className: 'form-row form-row-2' });
+  secondRow.append(
+    createControl('Start time', startTimePicker.element, errorStart),
+    createControl('End time', endTimePicker.element, errorEnd)
+  );
+
+  const thirdRow = el('div', { className: 'form-row form-row-1' });
+  thirdRow.append(createControl('Comment', commentInput, null, true));
+
+  formGrid.append(firstRow, secondRow, thirdRow);
 
   const actions = el('div', { className: 'form-actions' });
   const submitButton = createButton('Create track', 'primary', { type: 'submit' });
@@ -101,8 +110,8 @@ export function renderTracksView(container: HTMLElement): () => void {
 
   const formState: FormState = {
     date: dateInput.value,
-    start: startSelect.value,
-    end: endSelect.value,
+    start: startTimePicker.getValue(),
+    end: endTimePicker.getValue(),
     userId: '',
     activityId: '',
     comment: '',
@@ -143,8 +152,8 @@ export function renderTracksView(container: HTMLElement): () => void {
 
   const handleFormChange = () => {
     formState.date = dateInput.value;
-    formState.start = startSelect.value;
-    formState.end = endSelect.value;
+    formState.start = startTimePicker.getValue();
+    formState.end = endTimePicker.getValue();
     formState.userId = userSelect.value;
     formState.activityId = activitySelect.value;
     formState.comment = commentInput.value;
@@ -178,8 +187,9 @@ export function renderTracksView(container: HTMLElement): () => void {
       const dayEnd = dayjs(`${formState.date}T23:59`);
       const resolvedStart = nextStart.isAfter(dayEnd) ? dayEnd : nextStart;
       const resolvedEnd = nextEnd.isAfter(dayEnd) ? dayEnd : nextEnd;
-      startSelect.value = resolvedStart.format('HH:mm');
-      endSelect.value = resolvedEnd.format('HH:mm');
+      startTimePicker.setValue(resolvedStart.format('HH:mm'));
+      endTimePicker.setValue(resolvedEnd.format('HH:mm'));
+      handleFormChange();
       showSuccess(feedback, 'Track created!');
     } catch (error) {
       showError(feedback, (error as Error).message);

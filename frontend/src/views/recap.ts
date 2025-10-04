@@ -166,9 +166,20 @@ export function renderRecapView(container: HTMLElement): () => void {
     }
 
     const summary = recapState.data;
+    const startOfPeriod = dayjs(summary.start).startOf('day');
+    const formatMinutes = (minutes: number): string => {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      const parts: string[] = [];
+      if (hours > 0) {
+        parts.push(`${hours}h`);
+      }
+      parts.push(`${remainingMinutes}m`);
+      return parts.join(' ');
+    };
     const pieces = [
       `Period: ${summary.label}`,
-      `${dayjs(summary.start).format('YYYY-MM-DD HH:mm')} → ${dayjs(summary.end).format('YYYY-MM-DD HH:mm')}`,
+      `${startOfPeriod.format('YYYY-MM-DD HH:mm')} → ${dayjs(summary.end).format('YYYY-MM-DD HH:mm')}`,
       `Total minutes: ${summary.total_minutes}`
     ];
 
@@ -208,7 +219,7 @@ export function renderRecapView(container: HTMLElement): () => void {
       const nameCell = document.createElement('td');
       nameCell.textContent = entry.activity_name ?? `Activity #${entry.activity_id}`;
       const minutesCell = document.createElement('td');
-      minutesCell.textContent = String(entry.minutes);
+      minutesCell.textContent = formatMinutes(entry.minutes);
       minutesCell.className = 'text-right';
       const percentCell = document.createElement('td');
       percentCell.textContent = `${entry.percentage.toFixed(1)}%`;
@@ -234,6 +245,7 @@ export function renderRecapView(container: HTMLElement): () => void {
             data: entries.map((entry) => entry.minutes),
             backgroundColor: generatePalette(entries.length)
           }
+
         ]
       },
       options: {

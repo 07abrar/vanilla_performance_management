@@ -192,6 +192,24 @@ a {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.form-row {
+  display: grid;
+  gap: 16px;
+  grid-column: 1 / -1;
+}
+
+.form-row-3 {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.form-row-2 {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.form-row-1 {
+  grid-template-columns: 1fr;
+}
+
 .control {
   display: flex;
   flex-direction: column;
