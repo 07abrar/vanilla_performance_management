@@ -14,16 +14,17 @@ import {
 } from '../store';
 import { Activity, Track, User } from '../type';
 import { createButton, createCard, el, formatMinutes, setChildren } from '../ui/dom';
-import { createTimePicker, roundToNextQuarterHour, toMinutes } from '../ui/timePicker';
+import { createTimePicker, roundToNextQuarterHour } from '../ui/timePicker';
 
 interface FormState {
-  date: string;
+  startDate: string;
   start: string;
+  endDate: string;
   end: string;
   userId: string;
   activityId: string;
   comment: string;
-  errors: Partial<Record<'date' | 'start' | 'end' | 'user' | 'activity', string>>;
+  errors: Partial<Record<'startDate' | 'endDate' | 'start' | 'end' | 'user' | 'activity', string>>;
 }
 
 export function renderTracksView(container: HTMLElement): () => void {
@@ -48,11 +49,15 @@ export function renderTracksView(container: HTMLElement): () => void {
   const startDefault = roundToNextQuarterHour(dayjs());
   const endDefault = startDefault.add(1, 'hour');
 
-  const dateInput = document.createElement('input');
-  dateInput.type = 'date';
-  dateInput.value = today.format('YYYY-MM-DD');
+  const startDateInput = document.createElement('input');
+  startDateInput.type = 'date';
+  startDateInput.value = today.format('YYYY-MM-DD');
 
-    const startTimePicker = createTimePicker(startDefault.format('HH:mm'));
+  const endDateInput = document.createElement('input');
+  endDateInput.type = 'date';
+  endDateInput.value = startDateInput.value;
+
+  const startTimePicker = createTimePicker(startDefault.format('HH:mm'));
   const endTimePicker = createTimePicker(endDefault.format('HH:mm'));
 
   const userSelect = document.createElement('select');
@@ -61,7 +66,8 @@ export function renderTracksView(container: HTMLElement): () => void {
   commentInput.placeholder = 'Optional comment';
   commentInput.rows = 2;
 
-  const errorDate = el('div', { className: 'err' });
+  const errorStartDate = el('div', { className: 'err' });
+  const errorEndDate = el('div', { className: 'err' });
   const errorStart = el('div', { className: 'err' });
   const errorEnd = el('div', { className: 'err' });
   const errorUser = el('div', { className: 'err' });
@@ -69,15 +75,16 @@ export function renderTracksView(container: HTMLElement): () => void {
 
   const firstRow = el('div', { className: 'form-row form-row-3' });
   firstRow.append(
-    createControl('Date', dateInput, errorDate),
-    createControl('User', userSelect, errorUser),
-    createControl('Activity', activitySelect, errorActivity)
+    createControl('Start date', startDateInput, errorStartDate),
+    createControl('Start time', startTimePicker.element, errorStart),
+    createControl('User', userSelect, errorUser)
   );
 
-  const secondRow = el('div', { className: 'form-row form-row-2' });
+  const secondRow = el('div', { className: 'form-row form-row-3' });
   secondRow.append(
-    createControl('Start time', startTimePicker.element, errorStart),
-    createControl('End time', endTimePicker.element, errorEnd)
+    createControl('End date', endDateInput, errorEndDate),
+    createControl('End time', endTimePicker.element, errorEnd),
+    createControl('Activity', activitySelect, errorActivity)
   );
 
   const thirdRow = el('div', { className: 'form-row form-row-1' });
@@ -109,8 +116,9 @@ export function renderTracksView(container: HTMLElement): () => void {
   container.replaceChildren(page);
 
   const formState: FormState = {
-    date: dateInput.value,
+    startDate: startDateInput.value,
     start: startTimePicker.getValue(),
+    endDate: endDateInput.value,
     end: endTimePicker.getValue(),
     userId: '',
     activityId: '',
@@ -119,7 +127,7 @@ export function renderTracksView(container: HTMLElement): () => void {
   };
 
   const resetErrors = () => {
-    [errorDate, errorStart, errorEnd, errorUser, errorActivity].forEach((element) => {
+    [errorStartDate, errorEndDate, errorStart, errorEnd, errorUser, errorActivity].forEach((element) => {
       element.textContent = '';
     });
   };
@@ -127,16 +135,21 @@ export function renderTracksView(container: HTMLElement): () => void {
   const validate = (): boolean => {
     resetErrors();
     const errors: FormState['errors'] = {};
-    if (!formState.date) errors.date = 'Date is required.';
+    if (!formState.startDate) errors.startDate = 'Start date is required.';
+    if (!formState.endDate) errors.endDate = 'End date is required.';
     if (!formState.userId) errors.user = 'Select a user.';
     if (!formState.activityId) errors.activity = 'Select an activity.';
-    const startMinutes = toMinutes(formState.start);
-    const endMinutes = toMinutes(formState.end);
-    if (endMinutes <= startMinutes) {
-      errors.end = 'End time must be after start.';
+    if (formState.start && formState.end && formState.startDate && formState.endDate) {
+      const startDateTime = dayjs(`${formState.startDate}T${formState.start}`);
+      const endDateTime = dayjs(`${formState.endDate}T${formState.end}`);
+      if (!endDateTime.isAfter(startDateTime)) {
+        errors.end = 'End date/time must be after start.';
+        errors.endDate = 'End date/time must be after start.';
+      }
     }
     if (Object.keys(errors).length > 0) {
-      if (errors.date) errorDate.textContent = errors.date;
+      if (errors.startDate) errorStartDate.textContent = errors.startDate;
+      if (errors.endDate) errorEndDate.textContent = errors.endDate;
       if (errors.user) errorUser.textContent = errors.user;
       if (errors.activity) errorActivity.textContent = errors.activity;
       if (errors.end) errorEnd.textContent = errors.end;
@@ -151,8 +164,9 @@ export function renderTracksView(container: HTMLElement): () => void {
   };
 
   const handleFormChange = () => {
-    formState.date = dateInput.value;
+    formState.startDate = startDateInput.value;
     formState.start = startTimePicker.getValue();
+    formState.endDate = endDateInput.value;
     formState.end = endTimePicker.getValue();
     formState.userId = userSelect.value;
     formState.activityId = activitySelect.value;
@@ -168,8 +182,8 @@ export function renderTracksView(container: HTMLElement): () => void {
     feedback.textContent = '';
     feedback.className = 'status-message';
 
-    const startDateTime = dayjs(`${formState.date}T${formState.start}`);
-    const endDateTime = dayjs(`${formState.date}T${formState.end}`);
+    const startDateTime = dayjs(`${formState.startDate}T${formState.start}`);
+    const endDateTime = dayjs(`${formState.endDate}T${formState.end}`);
 
     try {
       await createTrack({
@@ -182,13 +196,12 @@ export function renderTracksView(container: HTMLElement): () => void {
       await loadTracks(true);
       commentInput.value = '';
       formState.comment = '';
-      const nextStart = startDateTime.add(1, 'hour');
-      const nextEnd = endDateTime.add(1, 'hour');
-      const dayEnd = dayjs(`${formState.date}T23:59`);
-      const resolvedStart = nextStart.isAfter(dayEnd) ? dayEnd : nextStart;
-      const resolvedEnd = nextEnd.isAfter(dayEnd) ? dayEnd : nextEnd;
-      startTimePicker.setValue(resolvedStart.format('HH:mm'));
-      endTimePicker.setValue(resolvedEnd.format('HH:mm'));
+      const nextStart = endDateTime;
+      const nextEnd = nextStart.add(1, 'hour');
+      startDateInput.value = nextStart.format('YYYY-MM-DD');
+      endDateInput.value = nextEnd.format('YYYY-MM-DD');
+      startTimePicker.setValue(nextStart.format('HH:mm'));
+      endTimePicker.setValue(nextEnd.format('HH:mm'));
       handleFormChange();
       showSuccess(feedback, 'Track created!');
     } catch (error) {
@@ -247,7 +260,10 @@ export function renderTracksView(container: HTMLElement): () => void {
 
       appendCell(row, start.format('YYYY-MM-DD'));
       appendCell(row, start.format('HH:mm'));
-      appendCell(row, end.format('HH:mm'));
+      const endCell = end.isSame(start, 'day')
+        ? end.format('HH:mm')
+        : `${end.format('YYYY-MM-DD')} ${end.format('HH:mm')}`;
+      appendCell(row, endCell);
       const durationCell = document.createElement('td');
       durationCell.appendChild(el('span', { className: 'badge', textContent: formatMinutes(duration) }));
       row.appendChild(durationCell);

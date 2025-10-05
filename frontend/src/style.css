@@ -240,6 +240,27 @@ a {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.time-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.time-picker select {
+  width: auto;
+  min-width: 70px;
+}
+
+.time-picker-hour,
+.time-picker-minute {
+  flex: 1 1 0;
+}
+
+.time-picker-separator {
+  font-weight: 600;
+  color: var(--muted-strong);
+}
+
 .control select {
   min-height: 40px;
 }
