@@ -122,7 +122,9 @@ export function renderRecapView(container: HTMLElement): () => void {
   }
 
   function triggerLoad(): void {
-    const params: Record<string, string> = {};
+    const params: Record<string, string> = {
+      tz_offset: String(new Date().getTimezoneOffset())
+    };
     if (inputs.mode === 'daily') {
       params.date = inputs.date;
     } else if (inputs.mode === 'weekly') {

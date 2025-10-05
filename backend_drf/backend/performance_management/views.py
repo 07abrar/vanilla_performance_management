@@ -6,7 +6,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as dt_timezone
 from .models import User, Activity, Track
 from .serializers import (
     UserSerializer,
@@ -120,65 +120,72 @@ def recap_view(request, mode):
         week_start_param = request.GET.get("week_start")
         year_param = request.GET.get("year")
         month_param = request.GET.get("month")
+        tz_offset_param = request.GET.get("tz_offset")
 
-        # Determine date range based on mode and parameters
-        now = timezone.now()
+        # Determine the timezone of the requesting client. The frontend supplies the
+        # browser's offset in minutes from UTC (as returned by
+        # Date.getTimezoneOffset). Positive offsets mean the client is behind UTC, so we
+        # negate the value when building a Django tzinfo, which expects minutes east of
+        # UTC.
+        if tz_offset_param is not None:
+            try:
+                tz_offset_minutes = int(tz_offset_param)
+            except ValueError as exc:
+                raise ValueError("Invalid tz_offset parameter") from exc
+            client_timezone = timezone.get_fixed_timezone(-tz_offset_minutes)
+        else:
+            client_timezone = timezone.get_current_timezone()
+
+        now_client = timezone.now().astimezone(client_timezone)
+
+        def parse_client_midnight(value: str) -> datetime:
+            """Return the client's midnight for the supplied ISO date string."""
+
+            normalized = value.replace("Z", "+00:00")
+            parsed = datetime.fromisoformat(normalized)
+            if timezone.is_naive(parsed):
+                parsed = timezone.make_aware(parsed, client_timezone)
+            else:
+                parsed = parsed.astimezone(client_timezone)
+            return parsed.replace(hour=0, minute=0, second=0, microsecond=0)
 
         if mode == "daily":
             if date_param:
-                # Parse date parameter (YYYY-MM-DD format)
-                target_date = datetime.fromisoformat(date_param.replace("Z", "+00:00"))
-                if timezone.is_naive(target_date):
-                    target_date = timezone.make_aware(target_date)
-                else:
-                    target_date = target_date.astimezone(
-                        timezone.get_current_timezone()
-                    )
-                start_date = target_date.replace(
+                start_local = parse_client_midnight(date_param)
+            else:
+                start_local = now_client.replace(
                     hour=0, minute=0, second=0, microsecond=0
                 )
-            else:
-                start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
-            end_date = start_date + timedelta(days=1)
+            end_local = start_local + timedelta(days=1)
 
         elif mode == "weekly":
             if week_start_param:
-                # Parse week_start parameter (YYYY-MM-DD format)
-                start_date = datetime.fromisoformat(
-                    week_start_param.replace("Z", "+00:00")
-                )
-                if timezone.is_naive(start_date):
-                    start_date = timezone.make_aware(start_date)
-                else:
-                    start_date = start_date.astimezone(timezone.get_current_timezone())
-                start_date = start_date.replace(
-                    hour=0, minute=0, second=0, microsecond=0
-                )
+                start_local = parse_client_midnight(week_start_param)
             else:
-                # Default to current week starting Monday
-                days_since_monday = now.weekday()
-                start_date = (now - timedelta(days=days_since_monday)).replace(
+                # Default to current week starting Monday in the client's timezone
+                days_since_monday = now_client.weekday()
+                start_local = (now_client - timedelta(days=days_since_monday)).replace(
                     hour=0, minute=0, second=0, microsecond=0
                 )
-            end_date = start_date + timedelta(days=7)
+            end_local = start_local + timedelta(days=7)
 
         elif mode == "monthly":
             if year_param and month_param:
-                # Use provided year and month
                 year = int(year_param)
                 month = int(month_param)
-                start_date = timezone.make_aware(datetime(year, month, 1))
+                start_local = timezone.make_aware(
+                    datetime(year, month, 1, hour=0, minute=0, second=0, microsecond=0),
+                    client_timezone,
+                )
             else:
-                # Default to current month
-                start_date = now.replace(
+                start_local = now_client.replace(
                     day=1, hour=0, minute=0, second=0, microsecond=0
                 )
 
-            # Calculate end of month
-            if start_date.month == 12:
-                end_date = start_date.replace(year=start_date.year + 1, month=1)
+            if start_local.month == 12:
+                end_local = start_local.replace(year=start_local.year + 1, month=1)
             else:
-                end_date = start_date.replace(month=start_date.month + 1)
+                end_local = start_local.replace(month=start_local.month + 1)
 
         else:
             return Response(
@@ -186,11 +193,14 @@ def recap_view(request, mode):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Convert the local range back to UTC for querying.
+        start_range = start_local.astimezone(dt_timezone.utc)
+        end_range = end_local.astimezone(dt_timezone.utc)
+
         # NOTE: Querying with select_related keeps the number of database hits low when
         #       we later access track.user or track.activity in the aggregation loop.
-        # Get tracks in the specified date range
         tracks = Track.objects.filter(
-            start_time__gte=start_date, start_time__lt=end_date
+            start_time__gte=start_range, start_time__lt=end_range
         ).select_related("user", "activity")
 
         # Calculate activity statistics keyed by activity id
@@ -236,18 +246,18 @@ def recap_view(request, mode):
 
         # Build a descriptive label for the selected period
         if mode == "daily":
-            label = start_date.strftime("%Y-%m-%d")
+            label = start_local.strftime("%Y-%m-%d")
         elif mode == "weekly":
-            end_display = (end_date - timedelta(days=1)).strftime("%Y-%m-%d")
-            label = f"{start_date.strftime('%Y-%m-%d')} → {end_display}"
+            end_display = (end_local - timedelta(days=1)).strftime("%Y-%m-%d")
+            label = f"{start_local.strftime('%Y-%m-%d')} → {end_display}"
         else:  # monthly
-            label = start_date.strftime("%B %Y")
+            label = start_local.strftime("%B %Y")
 
         response_data = {
             "mode": mode,
             "label": label,
-            "start": start_date.isoformat(),
-            "end": end_date.isoformat(),
+            "start": start_local.isoformat(),
+            "end": end_local.isoformat(),
             "total_minutes": round(total_minutes, 2),
             "entries": entries,
         }
