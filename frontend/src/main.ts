@@ -1,6 +1,6 @@
 import './style.css';
 import { initRouter, navigate } from './router';
-import { loadActivities, loadTracks, loadUsers } from './store';
+import { loadActivities, loadUsers } from './store';
 import { renderDatabaseView } from './views/database';
 import { renderTracksView } from './views/tracks';
 import { renderRecapView } from './views/recap';
@@ -75,8 +75,6 @@ function bootstrap(): void {
 
   void loadUsers();
   void loadActivities();
-  void loadTracks(true);
-
   window.navigate = navigate;
 }
 
