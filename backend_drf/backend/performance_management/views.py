@@ -87,6 +87,42 @@ class TrackViewSet(viewsets.ModelViewSet):
     def list(self, request):
         """List all tracks with user and activity details"""
         tracks = self.get_queryset()
+        date_param = request.query_params.get("date")
+        start_param = request.query_params.get("start")
+        end_param = request.query_params.get("end")
+
+        def parse_datetime(value: str) -> datetime:
+            normalized = value.replace("Z", "+00:00")
+            parsed = datetime.fromisoformat(normalized)
+            if timezone.is_naive(parsed):
+                parsed = timezone.make_aware(parsed, timezone.get_current_timezone())
+            return parsed
+
+        try:
+            if date_param:
+                start_range = parse_datetime(date_param).replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
+                end_range = start_range + timedelta(days=1)
+                tracks = tracks.filter(start_time__gte=start_range, start_time__lt=end_range)
+            else:
+                if start_param:
+                    start_range = parse_datetime(start_param)
+                    tracks = tracks.filter(start_time__gte=start_range)
+                if end_param:
+                    end_range = parse_datetime(end_param)
+                    tracks = tracks.filter(start_time__lt=end_range)
+        except ValueError:
+            return Response(
+                {"error": "Invalid date parameter."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        tracks = tracks.order_by("-start_time")
+        page = self.paginate_queryset(tracks)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(tracks, many=True)
         return Response(serializer.data)
 

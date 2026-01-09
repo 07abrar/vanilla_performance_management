@@ -12,7 +12,7 @@ import {
   loadUsers,
   subscribe
 } from '../store';
-import { Activity, Track, User } from '../type';
+import { Activity, User } from '../type';
 import { createButton, createCard, el, formatMinutes, setChildren } from '../ui/dom';
 import { createTimePicker, roundToNextQuarterHour } from '../ui/timePicker';
 
@@ -198,7 +198,7 @@ export function renderTracksView(container: HTMLElement): () => void {
         end_time: endDateTime.toISOString(),
         comment: formState.comment.trim() ? formState.comment.trim() : undefined
       });
-      await loadTracks(true);
+      await loadTracks({ date: selectedDate });
       commentInput.value = '';
       formState.comment = '';
       const nextStart = endDateTime;
@@ -237,13 +237,7 @@ export function renderTracksView(container: HTMLElement): () => void {
       return;
     }
 
-    updateDateOptions(tracksState.data);
-
-    const tracksForDay = tracksState.data.filter(
-      (track) => dayjs(track.start_time).format('YYYY-MM-DD') === selectedDate
-    );
-
-    if (!tracksForDay.length) {
+    if (!tracksState.data.length) {
       setChildren(tableWrapper, [
         el('p', { className: 'empty-state', textContent: 'No tracks for this date.' })
       ]);
@@ -267,7 +261,7 @@ export function renderTracksView(container: HTMLElement): () => void {
 
     const tbody = document.createElement('tbody');
 
-    tracksForDay.forEach((track) => {
+    tracksState.data.forEach((track) => {
       const row = document.createElement('tr');
       const start = dayjs(track.start_time);
       const end = dayjs(track.end_time);
@@ -313,62 +307,24 @@ export function renderTracksView(container: HTMLElement): () => void {
       el('span', { className: 'control-label', textContent: 'Day' })
     ]);
 
-    const selector = document.createElement('select');
+    const selector = document.createElement('input');
+    selector.type = 'date';
+    selector.value = selectedDate;
     selector.addEventListener('change', () => {
       selectedDate = selector.value || todayString;
-      renderTable();
+      void loadTracks({ date: selectedDate });
     });
 
     label.append(selector);
     wrapper.append(label);
 
-    const update = () => {
-      updateDateOptions(getTracksState().data, selector);
-    };
-
-    update();
-
     return wrapper;
-  }
-
-  function updateDateOptions(tracks: Track[], selector?: HTMLSelectElement): void {
-    const targetSelector = selector ?? (document.querySelector('.date-controls select') as HTMLSelectElement);
-
-    if (!targetSelector) return;
-
-    const datesSet = new Set<string>();
-    tracks.forEach((track) => {
-      datesSet.add(dayjs(track.start_time).format('YYYY-MM-DD'));
-    });
-
-    if (!datesSet.has(selectedDate)) {
-      datesSet.add(selectedDate);
-    }
-
-    const dates = Array.from(datesSet).sort((a, b) => (dayjs(a).isBefore(b) ? 1 : -1));
-
-    const currentValue = targetSelector.value || selectedDate;
-    targetSelector.innerHTML = '';
-
-    dates.forEach((date) => {
-      const option = document.createElement('option');
-      option.value = date;
-      option.textContent = dayjs(date).format('YYYY-MM-DD');
-      targetSelector.append(option);
-    });
-
-    if (dates.includes(currentValue)) {
-      targetSelector.value = currentValue;
-      selectedDate = currentValue;
-    } else {
-      targetSelector.value = selectedDate;
-    }
   }
 
   updateSelectOptions();
   void loadUsers();
   void loadActivities();
-  void loadTracks(true);
+  void loadTracks({ date: selectedDate });
   renderTable();
 
   const unsubscribe = subscribe(['tracks', 'users', 'activities'], () => {

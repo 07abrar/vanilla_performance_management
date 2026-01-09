@@ -26,6 +26,13 @@ type ResourceKey = 'users' | 'activities' | 'tracks' | 'recap';
 
 type Listener = () => void;
 
+export interface TrackListParams {
+  date?: string;
+  start?: string;
+  end?: string;
+  page?: number;
+}
+
 const listeners: Record<ResourceKey, Set<Listener>> = {
   users: new Set(),
   activities: new Set(),
@@ -177,15 +184,21 @@ export async function deleteActivity(id: number): Promise<void> {
   }
 }
 
-export async function loadTracks(force = true): Promise<void> {
+export async function loadTracks(params: TrackListParams = {}): Promise<void> {
   if (state.tracks.isLoading) return;
-  if (!force && state.tracks.data.length > 0) return;
   state.tracks.isLoading = true;
   state.tracks.error = null;
   notify('tracks');
   try {
-    const tracks = await apiClient.listTracks();
-    state.tracks.data = tracks.sort((a, b) => dayjs(b.start_time).valueOf() - dayjs(a.start_time).valueOf());
+    const queryParams: Record<string, string> = {};
+    if (params.date) queryParams.date = params.date;
+    if (params.start) queryParams.start = params.start;
+    if (params.end) queryParams.end = params.end;
+    if (params.page) queryParams.page = String(params.page);
+    const response = await apiClient.listTracks(queryParams);
+    state.tracks.data = response.results.sort(
+      (a, b) => dayjs(b.start_time).valueOf() - dayjs(a.start_time).valueOf()
+    );
   } catch (error) {
     state.tracks.error = (error as Error).message;
   } finally {
