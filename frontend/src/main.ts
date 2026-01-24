@@ -75,7 +75,7 @@ function bootstrap(): void {
 
   void loadUsers();
   void loadActivities();
-  void loadTracks(true);
+  void loadTracks();
 
   window.navigate = navigate;
 }

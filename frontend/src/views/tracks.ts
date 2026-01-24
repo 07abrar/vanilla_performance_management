@@ -108,9 +108,16 @@ export function renderTracksView(container: HTMLElement): () => void {
     el('p', { className: 'card-subtitle', textContent: 'List of activities that have been done.' })
   ]);
 
+  const listDateInput = document.createElement('input');
+  listDateInput.type = 'date';
+  listDateInput.value = today.format('YYYY-MM-DD');
+  const listFilters = el('div', { className: 'form-row form-row-1' }, [
+    createControl('Date', listDateInput)
+  ]);
+
   const tableWrapper = el('div', { className: 'table-wrapper' });
 
-  card.append(createHeader, form, divider, listHeader, tableWrapper);
+  card.append(createHeader, form, divider, listHeader, listFilters, tableWrapper);
 
   page.append(pageHeader, card);
   container.replaceChildren(page);
@@ -193,7 +200,7 @@ export function renderTracksView(container: HTMLElement): () => void {
         end_time: endDateTime.toISOString(),
         comment: formState.comment.trim() ? formState.comment.trim() : undefined
       });
-      await loadTracks(true);
+      await loadTracks({ date: listDateInput.value, page: 1, force: true });
       commentInput.value = '';
       formState.comment = '';
       const nextStart = endDateTime;
@@ -214,6 +221,10 @@ export function renderTracksView(container: HTMLElement): () => void {
   form.addEventListener('submit', handleSubmit);
   form.addEventListener('change', handleFormChange);
   form.addEventListener('input', handleFormChange);
+  const handleListDateChange = () => {
+    void loadTracks({ date: listDateInput.value, page: 1, force: true });
+  };
+  listDateInput.addEventListener('change', handleListDateChange);
 
   const renderTable = () => {
     const tracksState = getTracksState();
@@ -295,7 +306,7 @@ export function renderTracksView(container: HTMLElement): () => void {
   updateSelectOptions();
   void loadUsers();
   void loadActivities();
-  void loadTracks(true);
+  void loadTracks({ date: listDateInput.value, page: 1, force: true });
   renderTable();
 
   const unsubscribe = subscribe(['tracks', 'users', 'activities'], () => {
@@ -308,6 +319,7 @@ export function renderTracksView(container: HTMLElement): () => void {
     form.removeEventListener('submit', handleSubmit);
     form.removeEventListener('change', handleFormChange);
     form.removeEventListener('input', handleFormChange);
+    listDateInput.removeEventListener('change', handleListDateChange);
   };
 }
 

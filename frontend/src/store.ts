@@ -22,6 +22,18 @@ interface RecapState extends ResourceState<RecapOut | null> {
   mode: RecapMode;
 }
 
+interface PaginationMeta {
+  count: number;
+  next: string | null;
+  previous: string | null;
+}
+
+interface TracksState extends ResourceState<Track[]> {
+  pagination: PaginationMeta | null;
+  selectedDate: string;
+  page: number;
+}
+
 type ResourceKey = 'users' | 'activities' | 'tracks' | 'recap';
 
 type Listener = () => void;
@@ -38,7 +50,7 @@ const defaultRecap: RecapOut | null = null;
 const state = {
   users: createResource<User[]>([]),
   activities: createResource<Activity[]>([]),
-  tracks: createResource<Track[]>([]),
+  tracks: createTracksState(),
   recap: createRecapState()
 };
 
@@ -57,6 +69,17 @@ function createRecapState(): RecapState {
     error: null,
     params: null,
     mode: 'daily'
+  };
+}
+
+function createTracksState(): TracksState {
+  return {
+    data: [],
+    isLoading: false,
+    error: null,
+    pagination: null,
+    selectedDate: dayjs().format('YYYY-MM-DD'),
+    page: 1
   };
 }
 
@@ -79,7 +102,7 @@ export function getActivitiesState(): ResourceState<Activity[]> {
   return state.activities;
 }
 
-export function getTracksState(): ResourceState<Track[]> {
+export function getTracksState(): TracksState {
   return state.tracks;
 }
 
@@ -177,15 +200,49 @@ export async function deleteActivity(id: number): Promise<void> {
   }
 }
 
-export async function loadTracks(force = true): Promise<void> {
+export async function loadTracks(options: {
+  date?: string;
+  start?: string;
+  end?: string;
+  page?: number;
+  force?: boolean;
+} = {}): Promise<void> {
   if (state.tracks.isLoading) return;
-  if (!force && state.tracks.data.length > 0) return;
+  const resolvedDate =
+    options.date ?? (options.start || options.end ? undefined : state.tracks.selectedDate);
+  const resolvedPage = options.page ?? state.tracks.page;
+  const shouldForce = options.force ?? true;
+  const comparisonDate = resolvedDate ?? state.tracks.selectedDate;
+  if (
+    !shouldForce &&
+    state.tracks.data.length > 0 &&
+    comparisonDate === state.tracks.selectedDate &&
+    resolvedPage === state.tracks.page
+  ) {
+    return;
+  }
   state.tracks.isLoading = true;
   state.tracks.error = null;
   notify('tracks');
   try {
-    const tracks = await apiClient.listTracks();
-    state.tracks.data = tracks.sort((a, b) => dayjs(b.start_time).valueOf() - dayjs(a.start_time).valueOf());
+    const response = await apiClient.listTracks({
+      date: resolvedDate,
+      start: options.start,
+      end: options.end,
+      page: resolvedPage
+    });
+    if (resolvedDate) {
+      state.tracks.selectedDate = resolvedDate;
+    }
+    state.tracks.page = resolvedPage;
+    state.tracks.pagination = {
+      count: response.count,
+      next: response.next,
+      previous: response.previous
+    };
+    state.tracks.data = response.results.sort(
+      (a, b) => dayjs(b.start_time).valueOf() - dayjs(a.start_time).valueOf()
+    );
   } catch (error) {
     state.tracks.error = (error as Error).message;
   } finally {
@@ -199,9 +256,12 @@ export async function createTrack(payload: CreateTrackPayload): Promise<void> {
   notify('tracks');
   try {
     const created = await apiClient.createTrack(payload);
-    state.tracks.data = [created, ...state.tracks.data].sort(
-      (a, b) => dayjs(b.start_time).valueOf() - dayjs(a.start_time).valueOf()
-    );
+    const createdDate = dayjs(created.start_time).format('YYYY-MM-DD');
+    if (createdDate === state.tracks.selectedDate) {
+      state.tracks.data = [created, ...state.tracks.data].sort(
+        (a, b) => dayjs(b.start_time).valueOf() - dayjs(a.start_time).valueOf()
+      );
+    }
   } catch (error) {
     state.tracks.error = (error as Error).message;
     throw error;

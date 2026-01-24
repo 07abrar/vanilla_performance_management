@@ -3,6 +3,7 @@ import {
   CreateActivityPayload,
   CreateTrackPayload,
   CreateUserPayload,
+  PaginatedResponse,
   RecapMode,
   RecapOut,
   Track,
@@ -71,8 +72,19 @@ export const apiClient = {
     await request<void>(`/activities/${id}`, { method: 'DELETE' });
   },
 
-  async listTracks(): Promise<Track[]> {
-    return request<Track[]>('/tracks');
+  async listTracks(params?: {
+    date?: string;
+    start?: string;
+    end?: string;
+    page?: number;
+  }): Promise<PaginatedResponse<Track>> {
+    const search = new URLSearchParams();
+    if (params?.date) search.set('date', params.date);
+    if (params?.start) search.set('start', params.start);
+    if (params?.end) search.set('end', params.end);
+    if (params?.page) search.set('page', String(params.page));
+    const suffix = search.toString();
+    return request<PaginatedResponse<Track>>(`/tracks${suffix ? `?${suffix}` : ''}`);
   },
   async createTrack(payload: CreateTrackPayload): Promise<Track> {
     return request<Track>('/tracks', {

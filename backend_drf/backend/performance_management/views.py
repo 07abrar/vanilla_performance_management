@@ -87,6 +87,51 @@ class TrackViewSet(viewsets.ModelViewSet):
     def list(self, request):
         """List all tracks with user and activity details"""
         tracks = self.get_queryset()
+        date_param = request.query_params.get("date")
+        start_param = request.query_params.get("start")
+        end_param = request.query_params.get("end")
+
+        def parse_iso_datetime(value: str) -> datetime:
+            normalized = value.replace("Z", "+00:00")
+            try:
+                parsed = datetime.fromisoformat(normalized)
+            except ValueError as exc:
+                raise ValueError("Invalid date format. Use ISO 8601.") from exc
+            if timezone.is_naive(parsed):
+                parsed = timezone.make_aware(parsed, timezone.get_current_timezone())
+            return parsed
+
+        try:
+            if date_param:
+                start_range = parse_iso_datetime(date_param).replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
+                end_range = start_range + timedelta(days=1)
+                tracks = tracks.filter(
+                    start_time__gte=start_range,
+                    start_time__lt=end_range,
+                )
+            else:
+                start_range = parse_iso_datetime(start_param) if start_param else None
+                end_range = parse_iso_datetime(end_param) if end_param else None
+                if start_range and end_range and start_range >= end_range:
+                    return Response(
+                        {"error": "start must be before end."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                if start_range:
+                    tracks = tracks.filter(start_time__gte=start_range)
+                if end_range:
+                    tracks = tracks.filter(start_time__lt=end_range)
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        tracks = tracks.order_by("-start_time")
+        page = self.paginate_queryset(tracks)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
         serializer = self.get_serializer(tracks, many=True)
         return Response(serializer.data)
 
