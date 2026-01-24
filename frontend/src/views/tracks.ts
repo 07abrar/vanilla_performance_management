@@ -103,14 +103,9 @@ export function renderTracksView(container: HTMLElement): () => void {
 
   const divider = el('div', { className: 'card-divider' });
 
-  const todayString = dayjs().format('YYYY-MM-DD');
-
   const listHeader = el('div', { className: 'card-header' }, [
-    el('div', { className: 'card-header-main' }, [
-      el('h3', { className: 'section-title', textContent: 'Existing tracks' }),
-      el('p', { className: 'card-subtitle', textContent: 'List of activities that have been done.' })
-    ]),
-    createDateControls()
+    el('h3', { className: 'section-title', textContent: 'Existing tracks' }),
+    el('p', { className: 'card-subtitle', textContent: 'List of activities that have been done.' })
   ]);
 
   const tableWrapper = el('div', { className: 'table-wrapper' });
@@ -220,8 +215,6 @@ export function renderTracksView(container: HTMLElement): () => void {
   form.addEventListener('change', handleFormChange);
   form.addEventListener('input', handleFormChange);
 
-  let selectedDate = todayString;
-
   const renderTable = () => {
     const tracksState = getTracksState();
 
@@ -237,16 +230,8 @@ export function renderTracksView(container: HTMLElement): () => void {
       return;
     }
 
-    updateDateOptions(tracksState.data);
-
-    const tracksForDay = tracksState.data.filter(
-      (track) => dayjs(track.start_time).format('YYYY-MM-DD') === selectedDate
-    );
-
-    if (!tracksForDay.length) {
-      setChildren(tableWrapper, [
-        el('p', { className: 'empty-state', textContent: 'No tracks for this date.' })
-      ]);
+    if (!tracksState.data.length) {
+      setChildren(tableWrapper, [el('p', { className: 'empty-state', textContent: 'No tracks yet.' })]);
       return;
     }
 
@@ -267,7 +252,7 @@ export function renderTracksView(container: HTMLElement): () => void {
 
     const tbody = document.createElement('tbody');
 
-    tracksForDay.forEach((track) => {
+    tracksState.data.forEach((track) => {
       const row = document.createElement('tr');
       const start = dayjs(track.start_time);
       const end = dayjs(track.end_time);
@@ -306,64 +291,6 @@ export function renderTracksView(container: HTMLElement): () => void {
     table.appendChild(tbody);
     setChildren(tableWrapper, [table]);
   };
-
-  function createDateControls(): HTMLElement {
-    const wrapper = el('div', { className: 'date-controls' });
-    const label = el('label', { className: 'date-label' }, [
-      el('span', { className: 'control-label', textContent: 'Day' })
-    ]);
-
-    const selector = document.createElement('select');
-    selector.addEventListener('change', () => {
-      selectedDate = selector.value || todayString;
-      renderTable();
-    });
-
-    label.append(selector);
-    wrapper.append(label);
-
-    const update = () => {
-      updateDateOptions(getTracksState().data, selector);
-    };
-
-    update();
-
-    return wrapper;
-  }
-
-  function updateDateOptions(tracks: Track[], selector?: HTMLSelectElement): void {
-    const targetSelector = selector ?? (document.querySelector('.date-controls select') as HTMLSelectElement);
-
-    if (!targetSelector) return;
-
-    const datesSet = new Set<string>();
-    tracks.forEach((track) => {
-      datesSet.add(dayjs(track.start_time).format('YYYY-MM-DD'));
-    });
-
-    if (!datesSet.has(selectedDate)) {
-      datesSet.add(selectedDate);
-    }
-
-    const dates = Array.from(datesSet).sort((a, b) => (dayjs(a).isBefore(b) ? 1 : -1));
-
-    const currentValue = targetSelector.value || selectedDate;
-    targetSelector.innerHTML = '';
-
-    dates.forEach((date) => {
-      const option = document.createElement('option');
-      option.value = date;
-      option.textContent = dayjs(date).format('YYYY-MM-DD');
-      targetSelector.append(option);
-    });
-
-    if (dates.includes(currentValue)) {
-      targetSelector.value = currentValue;
-      selectedDate = currentValue;
-    } else {
-      targetSelector.value = selectedDate;
-    }
-  }
 
   updateSelectOptions();
   void loadUsers();
