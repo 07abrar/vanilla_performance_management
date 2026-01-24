@@ -17,6 +17,13 @@ export interface Track {
   comment: string | null;
 }
 
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
 export type RecapMode = 'daily' | 'weekly' | 'monthly';
 
 export interface RecapEntry {
