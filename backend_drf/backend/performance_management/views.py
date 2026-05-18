@@ -90,22 +90,32 @@ class TrackViewSet(viewsets.ModelViewSet):
         date_param = request.query_params.get("date")
         start_param = request.query_params.get("start")
         end_param = request.query_params.get("end")
-
-        def parse_iso_datetime(value: str) -> datetime:
-            normalized = value.replace("Z", "+00:00")
-            try:
-                parsed = datetime.fromisoformat(normalized)
-            except ValueError as exc:
-                raise ValueError("Invalid date format. Use ISO 8601.") from exc
-            if timezone.is_naive(parsed):
-                parsed = timezone.make_aware(parsed, timezone.get_current_timezone())
-            return parsed
+        tz_offset_param = request.query_params.get("tz_offset")
 
         try:
+            if tz_offset_param is not None:
+                try:
+                    tz_offset_minutes = int(tz_offset_param)
+                except ValueError as exc:
+                    raise ValueError("Invalid tz_offset parameter") from exc
+                client_timezone = timezone.get_fixed_timezone(-tz_offset_minutes)
+            else:
+                client_timezone = timezone.get_current_timezone()
+
+            def parse_iso_datetime(value: str) -> datetime:
+                normalized = value.replace("Z", "+00:00")
+                try:
+                    parsed = datetime.fromisoformat(normalized)
+                except ValueError as exc:
+                    raise ValueError("Invalid date format. Use ISO 8601.") from exc
+                if timezone.is_naive(parsed):
+                    parsed = timezone.make_aware(parsed, client_timezone)
+                return parsed
+
             if date_param:
-                start_range = parse_iso_datetime(date_param).replace(
-                    hour=0, minute=0, second=0, microsecond=0
-                )
+                start_range = parse_iso_datetime(date_param).astimezone(
+                    client_timezone
+                ).replace(hour=0, minute=0, second=0, microsecond=0)
                 end_range = start_range + timedelta(days=1)
                 tracks = tracks.filter(
                     start_time__gte=start_range,

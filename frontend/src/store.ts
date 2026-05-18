@@ -229,7 +229,8 @@ export async function loadTracks(options: {
       date: resolvedDate,
       start: options.start,
       end: options.end,
-      page: resolvedPage
+      page: resolvedPage,
+      tz_offset: new Date().getTimezoneOffset()
     });
     if (resolvedDate) {
       state.tracks.selectedDate = resolvedDate;
