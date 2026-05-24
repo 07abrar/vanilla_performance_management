@@ -71,7 +71,7 @@ export function renderTracksView(container: HTMLElement): () => void {
   const form = document.createElement("form");
   form.className = "track-form";
 
-  const formGrid = el("div", { className: "grid gap-4" });
+  const formGrid = el("div", { className: "flex flex-col gap-4" });
 
   const today = dayjs();
   const startDefault = roundToNextQuarterHour(dayjs());
@@ -121,7 +121,7 @@ export function renderTracksView(container: HTMLElement): () => void {
   });
 
   const firstRow = el("div", {
-    className: "grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4",
+    className: "flex gap-2",
   });
   firstRow.append(
     createControl("Start date", startDateInput, errorStartDate),
@@ -130,7 +130,7 @@ export function renderTracksView(container: HTMLElement): () => void {
   );
 
   const secondRow = el("div", {
-    className: "grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4",
+    className: "flex gap-2",
   });
   secondRow.append(
     createControl("End date", endDateInput, errorEndDate),
@@ -138,7 +138,7 @@ export function renderTracksView(container: HTMLElement): () => void {
     createControl("Activity", activitySelect, errorActivity),
   );
 
-  const thirdRow = el("div");
+  const thirdRow = el("div", { className: "flex gap-2" });
   thirdRow.append(createControl("Comment", commentInput, null, true));
 
   formGrid.append(firstRow, secondRow, thirdRow);
@@ -328,7 +328,11 @@ export function renderTracksView(container: HTMLElement): () => void {
 
     if (!tracksState.data.length) {
       setChildren(tableWrapper, [
-        el("p", { className: "empty-state", textContent: "No tracks yet." }),
+        el("p", {
+          className:
+            "p-6 text-center text-muted border border-dashed border-ring rounded-xl bg-white/60",
+          textContent: "No tracks yet.",
+        }),
       ]);
       return;
     }

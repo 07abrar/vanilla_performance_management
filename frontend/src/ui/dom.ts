@@ -78,7 +78,11 @@ export function renderList<T>(
 ): void {
   if (!items.length) {
     setChildren(container, [
-      el("p", { className: "empty-state", textContent: "No items yet." }),
+      el("p", {
+        className:
+          "p-6 text-center text-muted border border-dashed border-ring rounded-xl bg-white/60",
+        textContent: "No items yet.",
+      }),
     ]);
     return;
   }
@@ -97,11 +101,12 @@ export function showMessage(
 ): void {
   if (!message) {
     container.textContent = "";
-    container.className = "status-message";
+    container.className = "text-sm text-muted-strong";
     return;
   }
   container.textContent = message;
-  container.className = `status-message ${type === "error" ? "status-error" : "status-success"}`;
+  container.className =
+    type === "error" ? "text-sm text-danger-fg" : "text-sm text-teal-700";
 }
 
 export function formatMinutes(minutes: number): string {

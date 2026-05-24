@@ -9,7 +9,7 @@ const MINUTE_OPTIONS = Array.from({ length: 60 / MINUTE_STEP }, (_, index) =>
 );
 
 const PICKER_SELECT =
-  "flex-1 px-3 py-2.5 border border-ring rounded-[10px] bg-surface text-sm text-fg " +
+  "flex-1 min-w-[70px] px-3 py-2.5 border border-ring rounded-[10px] bg-surface text-sm text-fg " +
   "transition-colors duration-150 " +
   "focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(37,99,235,0.18)] " +
   "disabled:bg-slate-100 disabled:text-muted disabled:cursor-not-allowed " +
@@ -26,7 +26,7 @@ export function createTimePicker(defaultValue: string): TimePickerControl {
   container.className = "flex items-center gap-1.5";
 
   const hourSelect = document.createElement("select");
-  hourSelect.className = "PICKER_SELECT";
+  hourSelect.className = PICKER_SELECT;
   HOUR_OPTIONS.forEach((hour) => {
     const option = document.createElement("option");
     option.value = hour;
@@ -35,7 +35,7 @@ export function createTimePicker(defaultValue: string): TimePickerControl {
   });
 
   const minuteSelect = document.createElement("select");
-  minuteSelect.className = "PICKER_SELECT";
+  minuteSelect.className = PICKER_SELECT;
   MINUTE_OPTIONS.forEach((minute) => {
     const option = document.createElement("option");
     option.value = minute;
