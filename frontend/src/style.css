@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --fg: #0f172a;
   --muted: #64748b;
@@ -25,7 +29,12 @@ body,
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
     sans-serif;
   background: var(--bg);
   color: var(--fg);
@@ -90,7 +99,9 @@ a {
   color: var(--muted-strong);
   font-weight: 500;
   text-decoration: none;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .nav-link:hover {
@@ -237,7 +248,9 @@ a {
   background: var(--surface);
   font-size: 14px;
   color: var(--fg);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .time-picker {
@@ -305,7 +318,10 @@ button {
   cursor: pointer;
   background: var(--surface);
   color: var(--muted-strong);
-  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
 }
 
 button:hover {
@@ -443,7 +459,7 @@ button:disabled {
   margin-bottom: 10px;
 }
 
-input[type='text'] {
+input[type="text"] {
   flex: 1;
   padding: 8px 10px;
   border: 1px solid var(--ring);
