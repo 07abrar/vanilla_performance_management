@@ -68,12 +68,6 @@ a {
   font-size: 15px;
 }
 
-.dashboard-grid {
-  display: grid;
-  gap: 24px;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-}
-
 .data-card {
   gap: 20px;
 }
@@ -313,13 +307,6 @@ a {
   margin-bottom: 10px;
 }
 
-input[type="text"] {
-  flex: 1;
-  padding: 8px 10px;
-  border: 1px solid var(--ring);
-  border-radius: 8px;
-}
-
 .helper {
   color: var(--muted);
   font-size: 12px;
@@ -336,12 +323,6 @@ input[type="text"] {
   margin-top: 10px;
   border-top: 1px dashed var(--ring);
   padding-top: 10px;
-}
-
-.item {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
 }
 
 .skeleton {
