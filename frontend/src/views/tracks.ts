@@ -21,14 +21,7 @@ import {
   setChildren,
 } from "../ui/dom";
 import { createTimePicker, roundToNextQuarterHour } from "../ui/timePicker";
-
-const INPUT_CLASSES =
-  "w-full px-3 py-2.5 border border-ring rounded-[10px] bg-surface text-sm text-fg " +
-  "transition-colors duration-150 " +
-  "focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(37,99,235,0.18)] " +
-  "disabled:bg-slate-100 disabled:text-muted disabled:cursor-not-allowed";
-
-const SELECT_CLASSES = INPUT_CLASSES + " min-h-[40px]";
+import { INPUT_CLASSES, SELECT_CLASSES } from "../ui/classes";
 
 interface FormState {
   startDate: string;
@@ -51,7 +44,7 @@ export function renderTracksView(container: HTMLElement): () => void {
   const pageHeader = el("div", { className: "flex flex-col gap-1" }, [
     el("h2", { className: "text-2xl", textContent: "Tracks" }),
     el("p", {
-      className: "text-muted text-[15px]",
+      className: "text-muted text-sm",
       textContent: "Input what have been done today.",
     }),
   ]);
@@ -102,22 +95,22 @@ export function renderTracksView(container: HTMLElement): () => void {
   commentInput.className = INPUT_CLASSES;
 
   const errorStartDate = el("div", {
-    className: "text-danger-fg text-[13px] mt-1.5",
+    className: "text-danger-fg text-xs mt-1.5",
   });
   const errorEndDate = el("div", {
-    className: "text-danger-fg text-[13px] mt-1.5",
+    className: "text-danger-fg text-xs mt-1.5",
   });
   const errorStart = el("div", {
-    className: "text-danger-fg text-[13px] mt-1.5",
+    className: "text-danger-fg text-xs mt-1.5",
   });
   const errorEnd = el("div", {
-    className: "text-danger-fg text-[13px] mt-1.5",
+    className: "text-danger-fg text-xs mt-1.5",
   });
   const errorUser = el("div", {
-    className: "text-danger-fg text-[13px] mt-1.5",
+    className: "text-danger-fg text-xs mt-1.5",
   });
   const errorActivity = el("div", {
-    className: "text-danger-fg text-[13px] mt-1.5",
+    className: "text-danger-fg text-xs mt-1.5",
   });
 
   const firstRow = el("div", {
@@ -150,7 +143,7 @@ export function renderTracksView(container: HTMLElement): () => void {
   actions.append(submitButton);
 
   const feedback = el("p", { className: "status-message" });
-  const messages = el("div", { className: "min-h-[20px]" }, [feedback]);
+  const messages = el("div", { className: "min-h-5" }, [feedback]);
 
   form.append(formGrid, actions, messages);
 
@@ -171,7 +164,7 @@ export function renderTracksView(container: HTMLElement): () => void {
   listDateInput.type = "date";
   listDateInput.value = today.format("YYYY-MM-DD");
   listDateInput.className = INPUT_CLASSES;
-  const listFilters = el("div", { className: "max-w-[220px]" }, [
+  const listFilters = el("div", { className: "max-w-filter" }, [
     createControl("Date", listDateInput),
   ]);
 

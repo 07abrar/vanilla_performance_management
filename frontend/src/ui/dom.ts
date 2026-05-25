@@ -37,14 +37,14 @@ const BUTTON_GHOST = "bg-surface text-muted-strong hover:bg-slate-200";
 
 const BUTTON_PRIMARY =
   "bg-primary text-white border-primary hover:bg-primary-dark " +
-  "disabled:bg-[rgba(37,99,235,0.6)] disabled:border-[rgba(37,99,235,0.6)] disabled:text-white";
+  "disabled:bg-primary-disabled disabled:border-primary-disabled disabled:text-white";
 
 const BUTTON_DANGER =
   "bg-danger-bg text-danger-fg border-danger-border hover:bg-red-200";
 
 const CARD_BASE =
   "bg-surface border border-ring rounded-2xl p-6 " +
-  "shadow-[0_24px_40px_rgba(15,23,42,0.06)] flex flex-col gap-5";
+  "shadow-card flex flex-col gap-5";
 
 export function createButton(
   label: string,

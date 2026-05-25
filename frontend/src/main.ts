@@ -23,17 +23,17 @@ function createAppShell(): AppShell {
   const header = el("header", { className: "bg-surface border-b border-ring" });
   const headerContent = el("div", {
     className:
-      "max-w-[1100px] mx-auto p-6 flex flex-wrap items-center justify-between gap-4",
+      "max-w-layout mx-auto p-6 flex flex-wrap items-center justify-between gap-4",
   });
 
   const titleBlock = el("div");
   titleBlock.append(
     el("h1", {
-      className: "text-[28px] font-bold",
+      className: "text-3xl font-bold",
       textContent: "Performance Management",
     }),
     el("p", {
-      className: "mt-1 text-muted text-[15px]",
+      className: "mt-1 text-muted text-sm",
       textContent: "Monitor my daily activities",
     }),
   );
@@ -48,7 +48,7 @@ function createAppShell(): AppShell {
   const navLinkClasses =
     "inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-transparent " +
     "text-muted-strong font-medium no-underline transition-colors duration-150 " +
-    "hover:bg-[rgba(37,99,235,0.08)] hover:text-primary " +
+    "hover:bg-primary-hover hover:text-primary " +
     "aria-[current=page]:bg-primary-soft aria-[current=page]:text-primary-dark";
 
   links.forEach(({ label, path, icon }) => {
@@ -66,7 +66,7 @@ function createAppShell(): AppShell {
 
   const main = el("main", { className: "flex-1 py-8" });
   const mainContainer = el("div", {
-    className: "max-w-[1100px] mx-auto p-6 flex flex-col gap-8",
+    className: "max-w-layout mx-auto p-6 flex flex-col gap-8",
   });
   main.append(mainContainer);
 

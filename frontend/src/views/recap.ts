@@ -3,14 +3,7 @@ import Chart from "chart.js/auto";
 import { getRecapState, loadRecap, subscribe } from "../store";
 import { RecapMode } from "../type";
 import { createButton, createCard, el, setChildren } from "../ui/dom";
-
-const INPUT_CLASSES =
-  "w-full px-3 py-2.5 border border-ring rounded-[10px] bg-surface text-sm text-fg " +
-  "transition-colors duration-150 " +
-  "focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(37,99,235,0.18)] " +
-  "disabled:bg-slate-100 disabled:text-muted disabled:cursor-not-allowed";
-
-const SELECT_CLASSES = INPUT_CLASSES + " min-h-[40px]";
+import { INPUT_CLASSES, SELECT_CLASSES } from "../ui/classes";
 
 interface RecapInputs {
   mode: RecapMode;
@@ -25,7 +18,7 @@ export function renderRecapView(container: HTMLElement): () => void {
   const pageHeader = el("div", { className: "flex flex-col gap-1" }, [
     el("h2", { className: "text-2xl", textContent: "Recap" }),
     el("p", {
-      className: "text-muted text-[15px]",
+      className: "text-muted text-sm",
       textContent: "Shows the conclusion of user activity.",
     }),
   ]);
@@ -77,11 +70,11 @@ export function renderRecapView(container: HTMLElement): () => void {
   const recapCard = el("section", {
     className:
       "bg-surface border border-ring rounded-2xl p-6 " +
-      "shadow-[0_24px_40px_rgba(15,23,42,0.06)] flex flex-col gap-4",
+      "shadow-card flex flex-col gap-4",
   });
 
   const summaryContainer = el("p", {
-    className: "flex flex-wrap gap-2 items-center text-[15px]",
+    className: "flex flex-wrap gap-2 items-center text-sm",
   });
   recapCard.append(summaryContainer);
 
@@ -91,7 +84,7 @@ export function renderRecapView(container: HTMLElement): () => void {
 
   const canvas = document.createElement("canvas");
   const chartCard = createCard();
-  const chartWrapper = el("div", { className: "relative w-full h-[260px]" });
+  const chartWrapper = el("div", { className: "relative w-full h-chart" });
   chartWrapper.appendChild(canvas);
   chartCard.appendChild(chartWrapper);
 

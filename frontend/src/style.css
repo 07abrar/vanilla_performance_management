@@ -15,6 +15,20 @@
   --danger-fg: #b91c1c;
   --danger-bg: #fee2e2;
   --danger-border: #fecaca;
+
+  /* Shadows */
+  --shadow-card: 0 24px 40px rgba(15, 23, 42, 0.06);
+  --shadow-focus: 0 0 0 3px rgba(37, 99, 235, 0.18);
+
+  /* Primary color rgba aliases */
+  --primary-hover: rgba(37, 99, 235, 0.08);
+  --primary-disabled: rgba(37, 99, 235, 0.6);
+
+  /* Dimensions without a Tailwind scale equivalent */
+  --size-picker-min-w: 70px;
+  --size-filter-max-w: 220px;
+  --size-layout-max-w: 1100px;
+  --size-chart-h: 260px;
 }
 
 .skeleton {

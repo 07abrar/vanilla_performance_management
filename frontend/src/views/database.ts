@@ -24,7 +24,7 @@ export function renderDatabaseView(container: HTMLElement): () => void {
   const pageHeader = el("div", { className: "flex flex-col gap-1" }, [
     el("h2", { className: "text-2xl", textContent: "Database" }),
     el("p", {
-      className: "text-muted text-[15px]",
+      className: "text-muted text-sm",
       textContent: "Manage users and activities list.",
     }),
   ]);
