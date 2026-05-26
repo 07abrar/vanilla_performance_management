@@ -1,5 +1,5 @@
-import dayjs from 'dayjs';
-import { apiClient } from './api/client';
+import dayjs from 'shared/lib/dayjs';
+import { apiClient } from 'shared/api/client';
 import {
   Activity,
   CreateActivityPayload,
@@ -9,7 +9,9 @@ import {
   RecapOut,
   Track,
   User
-} from './type';
+} from 'shared/api/types';
+import { notify, subscribe } from './subscribe';
+export { subscribe } from './subscribe';
 
 interface ResourceState<T> {
   data: T;
@@ -33,17 +35,6 @@ interface TracksState extends ResourceState<Track[]> {
   selectedDate: string;
   page: number;
 }
-
-type ResourceKey = 'users' | 'activities' | 'tracks' | 'recap';
-
-type Listener = () => void;
-
-const listeners: Record<ResourceKey, Set<Listener>> = {
-  users: new Set(),
-  activities: new Set(),
-  tracks: new Set(),
-  recap: new Set()
-};
 
 const defaultRecap: RecapOut | null = null;
 
@@ -80,17 +71,6 @@ function createTracksState(): TracksState {
     pagination: null,
     selectedDate: dayjs().format('YYYY-MM-DD'),
     page: 1
-  };
-}
-
-function notify(key: ResourceKey): void {
-  listeners[key].forEach((listener) => listener());
-}
-
-export function subscribe(keys: ResourceKey[], listener: Listener): () => void {
-  keys.forEach((key) => listeners[key].add(listener));
-  return () => {
-    keys.forEach((key) => listeners[key].delete(listener));
   };
 }
 

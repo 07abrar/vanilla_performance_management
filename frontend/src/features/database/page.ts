@@ -8,8 +8,8 @@ import {
   loadActivities,
   loadUsers,
   subscribe,
-} from "../store";
-import { Activity, User } from "../type";
+} from "shared/store";
+import { Activity, User } from "shared/api/types";
 import {
   createButton,
   createCard,
@@ -17,7 +17,7 @@ import {
   renderList,
   setChildren,
   showMessage,
-} from "../ui/dom";
+} from "shared/ui/dom";
 
 export function renderDatabaseView(container: HTMLElement): () => void {
   const page = el("div", { className: "flex flex-col gap-6" });

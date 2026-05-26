@@ -1,4 +1,4 @@
-import dayjs from "dayjs";
+import dayjs from "shared/lib/dayjs";
 import { PICKER_SELECT_CLASSES } from "./classes";
 
 const MINUTE_STEP = 15;
