@@ -108,7 +108,3 @@ export function showMessage(
   container.className =
     type === "error" ? "text-sm text-danger-fg" : "text-sm text-teal-700";
 }
-
-export function formatMinutes(minutes: number): string {
-  return `${minutes} min`;
-}

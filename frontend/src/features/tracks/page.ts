@@ -1,4 +1,4 @@
-import dayjs from "dayjs";
+import dayjs from "shared/lib/dayjs";
 import {
   createTrack,
   deleteTrack,
@@ -11,17 +11,15 @@ import {
   loadTracks,
   loadUsers,
   subscribe,
-} from "../store";
-import { Activity, Track, User } from "../type";
+} from "shared/store";
+import { Activity, Track, User } from "shared/api/types";
+import { createButton, createCard, el, setChildren } from "shared/ui/dom";
 import {
-  createButton,
-  createCard,
-  el,
-  formatMinutes,
-  setChildren,
-} from "../ui/dom";
-import { createTimePicker, roundToNextQuarterHour } from "../ui/timePicker";
-import { INPUT_CLASSES, SELECT_CLASSES } from "../ui/classes";
+  createTimePicker,
+  roundToNextQuarterHour,
+} from "shared/ui/timePicker";
+import { INPUT_CLASSES, SELECT_CLASSES } from "shared/ui/classes";
+import { formatMinutes } from "shared/lib/format";
 
 interface FormState {
   startDate: string;

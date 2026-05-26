@@ -1,9 +1,9 @@
-import dayjs from "dayjs";
+import dayjs from "shared/lib/dayjs";
 import Chart from "chart.js/auto";
-import { getRecapState, loadRecap, subscribe } from "../store";
-import { RecapMode } from "../type";
-import { createButton, createCard, el, setChildren } from "../ui/dom";
-import { INPUT_CLASSES, SELECT_CLASSES } from "../ui/classes";
+import { getRecapState, loadRecap, subscribe } from "shared/store";
+import { RecapMode } from "shared/api/types";
+import { createButton, createCard, el, setChildren } from "shared/ui/dom";
+import { INPUT_CLASSES, SELECT_CLASSES } from "shared/ui/classes";
 
 interface RecapInputs {
   mode: RecapMode;
