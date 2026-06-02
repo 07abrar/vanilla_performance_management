@@ -219,15 +219,12 @@ export function renderTracksView(container: HTMLElement): () => void {
       if (state.deletingIds.has(id)) return;
 
       state.deletingIds.add(id);
+      // Clear any stale "Track created!" feedback
+      state.feedback = { message: null, isError: false };
       update();
 
       try {
         await deleteTrack(id);
-      } catch (error) {
-        state.feedback = {
-          message: (error as Error).message,
-          isError: true,
-        };
       } finally {
         state.deletingIds.delete(id);
         update();

@@ -265,7 +265,10 @@ export async function deleteTrack(id: number): Promise<void> {
   }
 }
 
+let recapRequestId = 0;
+
 export async function loadRecap(mode: RecapMode, params: Record<string, string>): Promise<void> {
+  const requestId = ++recapRequestId;
   state.recap.mode = mode;
   state.recap.params = params;
   state.recap.isLoading = true;
@@ -273,13 +276,17 @@ export async function loadRecap(mode: RecapMode, params: Record<string, string>)
   notify('recap');
   try {
     const data = await apiClient.getRecap(mode, params);
+    if (requestId !== recapRequestId) return; // a newer request superseded this one
     state.recap.data = data;
   } catch (error) {
+    if (requestId !== recapRequestId) return;
     state.recap.error = (error as Error).message;
     state.recap.data = null;
   } finally {
-    state.recap.isLoading = false;
-    notify('recap');
+    if (requestId === recapRequestId) {
+      state.recap.isLoading = false;
+      notify('recap');
+    }
   }
 }
 

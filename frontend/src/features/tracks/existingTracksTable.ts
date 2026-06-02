@@ -1,12 +1,8 @@
-import { html } from "lit-html";
+import { html, nothing } from "lit-html";
 import { Track } from "shared/api/types";
 import dayjs from "shared/lib/dayjs";
 import { formatMinutes } from "shared/lib/format";
-import {
-  getActivityName,
-  getTracksState,
-  getUserName,
-} from "shared/store";
+import { getActivityName, getTracksState, getUserName } from "shared/store";
 import type {
   FormControls,
   FormHandlers,
@@ -33,7 +29,8 @@ function tracksTable(state: FormState, handlers: FormHandlers) {
   if (tracksState.isLoading) {
     return html`<div class="skeleton"></div>`;
   }
-  if (tracksState.error) {
+  // Only replace the whole table when there's nothing to show (e.g. a load failure)
+  if (tracksState.error && !tracksState.data.length) {
     return html`<p class="text-sm text-danger-fg">${tracksState.error}</p>`;
   }
   if (!tracksState.data.length) {
@@ -48,6 +45,9 @@ function tracksTable(state: FormState, handlers: FormHandlers) {
 
   return html`
     <div class="overflow-x-auto">
+      ${tracksState.error
+        ? html`<p class="text-sm text-danger-fg mb-2">${tracksState.error}</p>`
+        : nothing}
       <table class="w-full border-collapse text-sm bg-surface">
         <thead>
           <tr>
