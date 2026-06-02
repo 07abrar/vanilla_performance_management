@@ -1,306 +1,313 @@
-import dayjs from "shared/lib/dayjs";
 import Chart from "chart.js/auto";
+import { html, render } from "lit-html";
+import { RecapEntry, RecapMode, RecapOut } from "shared/api/types";
+import dayjs from "shared/lib/dayjs";
 import { getRecapState, loadRecap, subscribe } from "shared/store";
-import { RecapMode } from "shared/api/types";
-import { createButton, createCard, el, setChildren } from "shared/ui/dom";
 import { INPUT_CLASSES, SELECT_CLASSES } from "shared/ui/classes";
+import { createDateInput } from "shared/ui/dateInput";
 
-interface RecapInputs {
+// ── Style constants ───────────────────────────────────────────────────────────
+
+const CARD =
+  "bg-surface border border-ring rounded-2xl p-6 shadow-card flex flex-col gap-5";
+
+const BTN_BASE =
+  "rounded-full px-4 py-2.5 text-sm font-semibold border border-transparent " +
+  "transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed";
+
+const BTN_PRIMARY =
+  BTN_BASE +
+  " bg-primary text-white border-primary hover:bg-primary-dark" +
+  " disabled:bg-primary-disabled disabled:border-primary-disabled disabled:text-white";
+
+// ── Local state ───────────────────────────────────────────────────────────────
+
+interface FilterState {
   mode: RecapMode;
-  date: string;
-  weekStart: string;
   year: number;
   month: number;
 }
 
-export function renderRecapView(container: HTMLElement): () => void {
-  const page = el("div", { className: "flex flex-col gap-6" });
-  const pageHeader = el("div", { className: "flex flex-col gap-1" }, [
-    el("h2", { className: "text-2xl", textContent: "Recap" }),
-    el("p", {
-      className: "text-muted text-sm",
-      textContent: "Shows the conclusion of user activity.",
-    }),
-  ]);
-
-  const controlCard = createCard();
-  const controlGrid = el("div", {
-    className: "grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]",
-  });
-
+function createFilterState(): FilterState {
   const today = dayjs();
-  const inputs: RecapInputs = {
+  return {
     mode: "daily",
-    date: today.format("YYYY-MM-DD"),
-    weekStart: today.startOf("week").format("YYYY-MM-DD"),
     year: today.year(),
     month: today.month() + 1,
   };
+}
 
-  const viewControl = createSelectControl("View", [
-    { label: "Daily", value: "daily" },
-    { label: "Weekly", value: "weekly" },
-    { label: "Monthly", value: "monthly" },
-  ]);
-  const refreshButton = createButton("Refresh", "primary");
-  refreshButton.addEventListener("click", () => triggerLoad());
+// ── Handler shape ─────────────────────────────────────────────────────────────
 
-  viewControl.select.value = inputs.mode;
+interface FilterHandlers {
+  // Called when the view mode select changes
+  onModeChange: (value: RecapMode) => void;
+  // Called when year/month number inputs change (monthly mode only)
+  onYearChange: (value: number) => void;
+  onMonthChange: (value: number) => void;
+  // Called when the Refresh button is clicked
+  onRefresh: () => void;
+}
 
-  const modeInputsContainer = el("div", {
-    className:
-      "col-span-full grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]",
-  });
+// ── Templates ─────────────────────────────────────────────────────────────────
 
-  viewControl.select.addEventListener("change", () => {
-    inputs.mode = viewControl.select.value as RecapMode;
-    renderModeInputs();
-    triggerLoad();
-  });
+// Returns "2h 30m" format — intentionally different from shared/lib/format's "45 min"
+function formatMinutes(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const rem = minutes % 60;
+  const parts: string[] = [];
+  if (hours > 0) parts.push(`${hours}h`);
+  parts.push(`${rem}m`);
+  return parts.join(" ");
+}
 
-  const actions = el(
-    "div",
-    { className: "col-span-full flex justify-end mt-1" },
-    [refreshButton],
+function modeInputs(
+  state: FilterState,
+  handlers: FilterHandlers,
+  dailyDateEl: HTMLInputElement,
+  weekStartEl: HTMLInputElement,
+) {
+  if (state.mode === "daily") {
+    return html`
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-semibold text-muted-strong">Date</span>
+        ${dailyDateEl}
+      </label>
+    `;
+  }
+  if (state.mode === "weekly") {
+    return html`
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-semibold text-muted-strong">Week start</span>
+        ${weekStartEl}
+      </label>
+    `;
+  }
+  return html`
+    <label class="flex flex-col gap-1.5">
+      <span class="text-sm font-semibold text-muted-strong">Year</span>
+      <input
+        type="number"
+        class=${INPUT_CLASSES}
+        min="2000"
+        max="2100"
+        .value=${String(state.year)}
+        @input=${(e: Event) =>
+          handlers.onYearChange(Number((e.target as HTMLInputElement).value))}
+      />
+    </label>
+    <label class="flex flex-col gap-1.5">
+      <span class="text-sm font-semibold text-muted-strong">Month</span>
+      <input
+        type="number"
+        class=${INPUT_CLASSES}
+        min="1"
+        max="12"
+        .value=${String(state.month)}
+        @input=${(e: Event) =>
+          handlers.onMonthChange(Number((e.target as HTMLInputElement).value))}
+      />
+    </label>
+  `;
+}
+
+function controlSection(
+  state: FilterState,
+  handlers: FilterHandlers,
+  dailyDateEl: HTMLInputElement,
+  weekStartEl: HTMLInputElement,
+) {
+  const isLoading = getRecapState().isLoading;
+  return html`
+    <section class=${CARD}>
+      <div class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
+        <label class="flex flex-col gap-1.5">
+          <span class="text-sm font-semibold text-muted-strong">View</span>
+          <select
+            class=${SELECT_CLASSES}
+            @change=${(e: Event) =>
+              handlers.onModeChange(
+                (e.target as HTMLSelectElement).value as RecapMode,
+              )}
+          >
+            <option value="daily" ?selected=${state.mode === "daily"}>
+              Daily
+            </option>
+            <option value="weekly" ?selected=${state.mode === "weekly"}>
+              Weekly
+            </option>
+            <option value="monthly" ?selected=${state.mode === "monthly"}>
+              Monthly
+            </option>
+          </select>
+        </label>
+        <div
+          class="col-span-full grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]"
+        >
+          ${modeInputs(state, handlers, dailyDateEl, weekStartEl)}
+        </div>
+        <div class="col-span-full flex justify-end mt-1">
+          <button
+            class=${BTN_PRIMARY}
+            ?disabled=${isLoading}
+            @click=${handlers.onRefresh}
+          >
+            ${isLoading ? "Refreshing…" : "Refresh"}
+          </button>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function summaryLine(data: RecapOut) {
+  const startOfPeriod = dayjs(data.start).startOf("day");
+  return html`
+    <p class="flex flex-wrap gap-2 items-center text-sm">
+      <span>Period: ${data.label}</span>
+      <span class="w-1 h-1 rounded-full bg-muted" aria-hidden="true"></span>
+      <span
+        >${startOfPeriod.format("YYYY-MM-DD HH:mm")} →
+        ${dayjs(data.end).format("YYYY-MM-DD HH:mm")}</span
+      >
+      <span class="w-1 h-1 rounded-full bg-muted" aria-hidden="true"></span>
+      <span>Total minutes: ${data.total_minutes}</span>
+    </p>
+  `;
+}
+
+function entriesTable(entries: RecapEntry[]) {
+  return html`
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-sm bg-surface">
+        <thead>
+          <tr>
+            ${["Activity", "Minutes", "%"].map(
+              (label, i) => html`
+                <th
+                  class=${"font-semibold text-muted-strong px-3 py-3 border-b border-ring bg-slate-50" +
+                  (i === 0 ? " text-left" : " text-right")}
+                >
+                  ${label}
+                </th>
+              `,
+            )}
+          </tr>
+        </thead>
+        <tbody>
+          ${entries.map(
+            (entry) => html`
+              <tr class="hover:bg-slate-50">
+                <td class="px-3 py-3 border-b border-ring">
+                  ${entry.activity_name ?? `Activity #${entry.activity_id}`}
+                </td>
+                <td class="px-3 py-3 border-b border-ring text-right">
+                  ${formatMinutes(entry.minutes)}
+                </td>
+                <td class="px-3 py-3 border-b border-ring text-right">
+                  ${entry.percentage.toFixed(1)}%
+                </td>
+              </tr>
+            `,
+          )}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function recapBody(canvasEl: HTMLCanvasElement) {
+  const recapState = getRecapState();
+
+  if (recapState.isLoading) {
+    return html`<div class="skeleton"></div>`;
+  }
+  if (recapState.error) {
+    return html`<p class="text-sm text-danger-fg">${recapState.error}</p>`;
+  }
+  if (!recapState.data) {
+    return html`<p class="text-sm text-muted-strong">No recap data yet.</p>`;
+  }
+
+  const data = recapState.data;
+
+  if (!data.entries.length) {
+    return html`
+      ${summaryLine(data)}
+      <p
+        class="p-6 text-center text-muted border border-dashed border-ring rounded-xl bg-white/60"
+      >
+        No data for the selected period.
+      </p>
+    `;
+  }
+
+  return html`
+    ${summaryLine(data)}
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6">
+      <div class=${CARD}>
+        <div class="relative w-full h-chart">${canvasEl}</div>
+      </div>
+      <div class=${CARD}>${entriesTable(data.entries)}</div>
+    </div>
+  `;
+}
+
+function recapPage(
+  state: FilterState,
+  handlers: FilterHandlers,
+  canvasEl: HTMLCanvasElement,
+  dailyDateEl: HTMLInputElement,
+  weekStartEl: HTMLInputElement,
+) {
+  return html`
+    <div class="flex flex-col gap-6">
+      <div class="flex flex-col gap-1">
+        <h2 class="text-2xl">Recap</h2>
+        <p class="text-muted text-sm">Shows the conclusion of user activity.</p>
+      </div>
+      ${controlSection(state, handlers, dailyDateEl, weekStartEl)}
+      <section class=${CARD}>${recapBody(canvasEl)}</section>
+    </div>
+  `;
+}
+
+// ── Main export ───────────────────────────────────────────────────────────────
+
+export function renderRecapView(container: HTMLElement): () => void {
+  const root = document.createElement("div");
+  container.replaceChildren(root);
+
+  const today = dayjs();
+  const dailyDateInput = createDateInput(today.format("YYYY-MM-DD"));
+  const weekStartDateInput = createDateInput(
+    today.startOf("week").format("YYYY-MM-DD"),
   );
 
-  controlGrid.append(viewControl.wrapper, modeInputsContainer, actions);
-  controlCard.append(controlGrid);
-
-  const recapCard = el("section", {
-    className:
-      "bg-surface border border-ring rounded-2xl p-6 " +
-      "shadow-card flex flex-col gap-4",
-  });
-
-  const summaryContainer = el("p", {
-    className: "flex flex-wrap gap-2 items-center text-sm",
-  });
-  recapCard.append(summaryContainer);
-
-  const bodyContainer = el("div", {
-    className: "grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6",
-  });
-
   const canvas = document.createElement("canvas");
-  const chartCard = createCard();
-  const chartWrapper = el("div", { className: "relative w-full h-chart" });
-  chartWrapper.appendChild(canvas);
-  chartCard.appendChild(chartWrapper);
-
-  const tableContainer = el("div", { className: "overflow-x-auto" });
-  const tableCard = createCard();
-  tableCard.appendChild(tableContainer);
-
-  bodyContainer.append(chartCard, tableCard);
-  recapCard.append(bodyContainer);
-
-  page.append(pageHeader, controlCard, recapCard);
-  container.replaceChildren(page);
-
   let chart: Chart | null = null;
 
-  function renderModeInputs(): void {
-    const fields: HTMLElement[] = [];
-
-    if (inputs.mode === "daily") {
-      const dateInput = document.createElement("input");
-      dateInput.type = "date";
-      dateInput.className = INPUT_CLASSES;
-      dateInput.value = inputs.date;
-      dateInput.addEventListener("input", () => {
-        inputs.date = dateInput.value;
-      });
-      fields.push(createControl("Date", dateInput));
-    }
-
-    if (inputs.mode === "weekly") {
-      const weekInput = document.createElement("input");
-      weekInput.type = "date";
-      weekInput.className = INPUT_CLASSES;
-      weekInput.value = inputs.weekStart;
-      weekInput.addEventListener("input", () => {
-        inputs.weekStart = weekInput.value;
-      });
-      fields.push(createControl("Week start", weekInput));
-    }
-
-    if (inputs.mode === "monthly") {
-      const yearInput = document.createElement("input");
-      yearInput.type = "number";
-      yearInput.className = INPUT_CLASSES;
-      yearInput.min = "2000";
-      yearInput.max = "2100";
-      yearInput.value = String(inputs.year);
-      yearInput.addEventListener("input", () => {
-        inputs.year = Number(yearInput.value);
-      });
-
-      const monthInput = document.createElement("input");
-      monthInput.type = "number";
-      monthInput.className = INPUT_CLASSES;
-      monthInput.min = "1";
-      monthInput.max = "12";
-      monthInput.value = String(inputs.month);
-      monthInput.addEventListener("input", () => {
-        inputs.month = Number(monthInput.value);
-      });
-
-      fields.push(createControl("Year", yearInput));
-      fields.push(createControl("Month", monthInput));
-    }
-
-    setChildren(modeInputsContainer, fields);
-  }
+  const state = createFilterState();
 
   function triggerLoad(): void {
     const params: Record<string, string> = {
       tz_offset: String(new Date().getTimezoneOffset()),
     };
-    if (inputs.mode === "daily") params.date = inputs.date;
-    else if (inputs.mode === "weekly") params.week_start = inputs.weekStart;
+    if (state.mode === "daily") params.date = dailyDateInput.getValue();
+    else if (state.mode === "weekly")
+      params.week_start = weekStartDateInput.getValue();
     else {
-      params.year = String(inputs.year);
-      params.month = String(inputs.month);
+      params.year = String(state.year);
+      params.month = String(state.month);
     }
-    void loadRecap(inputs.mode, params);
+    void loadRecap(state.mode, params);
   }
 
-  function renderRecap(): void {
-    const recapState = getRecapState();
+  // Changing the daily / weekly date immediately reloads the recap
+  dailyDateInput.element.addEventListener("change", () => triggerLoad());
+  weekStartDateInput.element.addEventListener("change", () => triggerLoad());
 
-    refreshButton.disabled = recapState.isLoading;
-    refreshButton.textContent = recapState.isLoading
-      ? "Refreshing…"
-      : "Refresh";
-
-    if (recapState.isLoading) {
-      setChildren(summaryContainer, [el("span", { className: "skeleton" })]);
-      setChildren(tableContainer, [el("div", { className: "skeleton" })]);
-      destroyChart();
-      return;
-    }
-
-    if (recapState.error) {
-      setChildren(summaryContainer, [
-        el("span", {
-          className: "text-sm text-danger-fg",
-          textContent: recapState.error,
-        }),
-      ]);
-      setChildren(tableContainer, []);
-      destroyChart();
-      return;
-    }
-
-    if (!recapState.data) {
-      setChildren(summaryContainer, [
-        el("span", {
-          className: "text-sm text-muted-strong",
-          textContent: "No recap data yet.",
-        }),
-      ]);
-      setChildren(tableContainer, []);
-      destroyChart();
-      return;
-    }
-
-    const summary = recapState.data;
-    const startOfPeriod = dayjs(summary.start).startOf("day");
-
-    const formatMinutes = (minutes: number): string => {
-      const hours = Math.floor(minutes / 60);
-      const remaining = minutes % 60;
-      const parts: string[] = [];
-      if (hours > 0) parts.push(`${hours}h`);
-      parts.push(`${remaining}m`);
-      return parts.join(" ");
-    };
-
-    const pieces = [
-      `Period: ${summary.label}`,
-      `${startOfPeriod.format("YYYY-MM-DD HH:mm")} → ${dayjs(summary.end).format("YYYY-MM-DD HH:mm")}`,
-      `Total minutes: ${summary.total_minutes}`,
-    ];
-
-    const summaryElements = pieces.flatMap((text, index) => {
-      const elements: HTMLElement[] = [];
-      elements.push(el("span", { textContent: text }));
-      if (index < pieces.length - 1) {
-        elements.push(
-          el("span", {
-            className: "w-1 h-1 rounded-full bg-muted",
-            attrs: { "aria-hidden": "true" },
-          }),
-        );
-      }
-      return elements;
-    });
-
-    setChildren(summaryContainer, summaryElements);
-
-    if (!summary.entries.length) {
-      setChildren(tableContainer, [
-        el("p", {
-          className:
-            "p-6 text-center text-muted border border-dashed border-ring rounded-xl bg-white/60",
-          textContent: "No data for the selected period.",
-        }),
-      ]);
-      destroyChart();
-      return;
-    }
-
-    const table = document.createElement("table");
-    table.className = "w-full border-collapse text-sm bg-surface";
-
-    const thead = document.createElement("thead");
-    const headerRow = document.createElement("tr");
-    ["Activity", "Minutes", "%"].forEach((label, index) => {
-      const th = document.createElement("th");
-      th.textContent = label;
-      th.className =
-        "font-semibold text-muted-strong px-3 py-3 border-b border-ring bg-slate-50" +
-        (index === 0 ? " text-left" : " text-right");
-      headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-
-    const tbody = document.createElement("tbody");
-    summary.entries.forEach((entry) => {
-      const row = document.createElement("tr");
-      row.className = "hover:bg-slate-50";
-
-      const nameCell = document.createElement("td");
-      nameCell.textContent =
-        entry.activity_name ?? `Activity #${entry.activity_id}`;
-      nameCell.className = "px-3 py-3 border-b border-ring";
-
-      const minutesCell = document.createElement("td");
-      minutesCell.textContent = formatMinutes(entry.minutes);
-      minutesCell.className = "px-3 py-3 border-b border-ring text-right";
-
-      const percentCell = document.createElement("td");
-      percentCell.textContent = `${entry.percentage.toFixed(1)}%`;
-      percentCell.className = "px-3 py-3 border-b border-ring text-right";
-
-      row.append(nameCell, minutesCell, percentCell);
-      tbody.appendChild(row);
-    });
-    table.appendChild(tbody);
-    setChildren(tableContainer, [table]);
-
-    renderChart(summary.entries);
-  }
-
-  function renderChart(
-    entries: {
-      activity_name: string | null;
-      activity_id: number;
-      minutes: number;
-    }[],
-  ): void {
+  function renderChart(entries: RecapEntry[]): void {
     destroyChart();
     if (!entries.length) return;
     chart = new Chart(canvas, {
@@ -327,46 +334,66 @@ export function renderRecapView(container: HTMLElement): () => void {
     }
   }
 
-  function generatePalette(count: number): string[] {
-    return Array.from({ length: count }, (_, i) => {
-      const hue = Math.round((360 / Math.max(1, count)) * i);
-      return `hsl(${hue}, 70%, 60%)`;
-    });
+  function update(): void {
+    render(
+      recapPage(
+        state,
+        recapHandlers,
+        canvas,
+        dailyDateInput.element,
+        weekStartDateInput.element,
+      ),
+      root,
+    );
+    const recapState = getRecapState();
+    if (recapState.data?.entries.length) {
+      renderChart(recapState.data.entries);
+    } else {
+      destroyChart();
+    }
   }
 
-  renderModeInputs();
+  // Form event handlers for the Recap card — mutate state and call update()
+  const recapHandlers: FilterHandlers = {
+    onModeChange(value) {
+      state.mode = value;
+      update();
+      triggerLoad();
+    },
+
+    onYearChange(value) {
+      state.year = value;
+      update();
+    },
+
+    onMonthChange(value) {
+      state.month = value;
+      update();
+    },
+
+    onRefresh() {
+      triggerLoad();
+    },
+  };
+
+  // Initial render
+  update();
   triggerLoad();
-  renderRecap();
 
-  const unsubscribe = subscribe(["recap"], renderRecap);
+  // Re-render whenever the store notifies us (e.g. after loadRecap resolves).
+  const unsubscribe = subscribe(["recap"], update);
 
+  // Cleanup: lit-html owns the event listeners; destroy the chart to release
+  // its canvas reference, then unsubscribe from the store.
   return () => {
     unsubscribe();
     destroyChart();
   };
 }
 
-function createSelectControl(
-  label: string,
-  options: { label: string; value: string }[],
-): { wrapper: HTMLElement; select: HTMLSelectElement } {
-  const select = document.createElement("select");
-  select.className = SELECT_CLASSES;
-  options.forEach((option) => {
-    const opt = document.createElement("option");
-    opt.value = option.value;
-    opt.textContent = option.label;
-    select.appendChild(opt);
+function generatePalette(count: number): string[] {
+  return Array.from({ length: count }, (_, i) => {
+    const hue = Math.round((360 / Math.max(1, count)) * i);
+    return `hsl(${hue}, 70%, 60%)`;
   });
-  return { wrapper: createControl(label, select), select };
-}
-
-function createControl(label: string, input: HTMLElement): HTMLElement {
-  const wrapper = el("label", { className: "flex flex-col gap-1.5" });
-  const labelText = el("span", {
-    className: "text-sm font-semibold text-muted-strong",
-    textContent: label,
-  });
-  wrapper.append(labelText, input);
-  return wrapper;
 }
