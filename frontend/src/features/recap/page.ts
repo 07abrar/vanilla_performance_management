@@ -303,6 +303,10 @@ export function renderRecapView(container: HTMLElement): () => void {
     void loadRecap(state.mode, params);
   }
 
+  // Changing the daily / weekly date immediately reloads the recap
+  dailyDateInput.element.addEventListener("change", () => triggerLoad());
+  weekStartDateInput.element.addEventListener("change", () => triggerLoad());
+
   function renderChart(entries: RecapEntry[]): void {
     destroyChart();
     if (!entries.length) return;
