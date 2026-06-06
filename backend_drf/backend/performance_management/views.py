@@ -20,29 +20,9 @@ class UserViewSet(viewsets.ModelViewSet):
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
-
-    def list(self, request):
-        """List all users"""
-        users = self.get_queryset()
-        serializer = self.get_serializer(users, many=True)
-        return Response(serializer.data)
-
-    def create(self, request):
-        """Create a new user"""
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def destroy(self, request, pk=None):
-        """Delete a user"""
-        try:
-            user = self.get_object()
-            user.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except User.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+    # The frontend expects /users to return a plain array, so disable pagination
+    # and let ModelViewSet provide the default list/create/destroy behavior.
+    pagination_class = None
 
 
 class ActivityViewSet(viewsets.ModelViewSet):
@@ -50,29 +30,10 @@ class ActivityViewSet(viewsets.ModelViewSet):
 
     queryset = Activity.objects.all()
     serializer_class = ActivitySerializer
-
-    def list(self, request):
-        """List all activities"""
-        activities = self.get_queryset()
-        serializer = self.get_serializer(activities, many=True)
-        return Response(serializer.data)
-
-    def create(self, request):
-        """Create a new activity"""
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def destroy(self, request, pk=None):
-        """Delete an activity"""
-        try:
-            activity = self.get_object()
-            activity.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Activity.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+    # The frontend expects /activities to return a plain array, so disable
+    # pagination and let ModelViewSet provide the default list/create/destroy
+    # behavior.
+    pagination_class = None
 
 
 class TrackViewSet(viewsets.ModelViewSet):
@@ -144,23 +105,6 @@ class TrackViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(tracks, many=True)
         return Response(serializer.data)
-
-    def create(self, request):
-        """Create a new track"""
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def destroy(self, request, pk=None):
-        """Delete a track"""
-        try:
-            track = self.get_object()
-            track.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Track.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(["GET"])
