@@ -117,7 +117,7 @@ export function renderTracksView(container: HTMLElement): () => void {
 
   // Changing the list date filter immediately reloads the table.
   listDateInput.element.addEventListener("change", () => {
-    void loadTracks({ date: listDateInput.getValue(), page: 1, force: true });
+    void loadTracks({ date: listDateInput.getValue(), force: true });
   });
 
   const state = createFormState();
@@ -193,7 +193,6 @@ export function renderTracksView(container: HTMLElement): () => void {
         });
         await loadTracks({
           date: listDateInput.getValue(),
-          page: 1,
           force: true,
         });
         state.comment = "";
@@ -240,7 +239,7 @@ export function renderTracksView(container: HTMLElement): () => void {
 
   void loadUsers();
   void loadActivities();
-  void loadTracks({ date: listDateInput.getValue(), page: 1, force: true });
+  void loadTracks({ date: listDateInput.getValue(), force: true });
 
   return () => unsubscribe();
 }

@@ -21,58 +21,12 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    def list(self, request):
-        """List all users"""
-        users = self.get_queryset()
-        serializer = self.get_serializer(users, many=True)
-        return Response(serializer.data)
-
-    def create(self, request):
-        """Create a new user"""
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def destroy(self, request, pk=None):
-        """Delete a user"""
-        try:
-            user = self.get_object()
-            user.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except User.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
 
 class ActivityViewSet(viewsets.ModelViewSet):
     """ViewSet for Activity model - supports list, create, retrieve, update, delete"""
 
     queryset = Activity.objects.all()
     serializer_class = ActivitySerializer
-
-    def list(self, request):
-        """List all activities"""
-        activities = self.get_queryset()
-        serializer = self.get_serializer(activities, many=True)
-        return Response(serializer.data)
-
-    def create(self, request):
-        """Create a new activity"""
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def destroy(self, request, pk=None):
-        """Delete an activity"""
-        try:
-            activity = self.get_object()
-            activity.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Activity.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 class TrackViewSet(viewsets.ModelViewSet):
@@ -113,9 +67,11 @@ class TrackViewSet(viewsets.ModelViewSet):
                 return parsed
 
             if date_param:
-                start_range = parse_iso_datetime(date_param).astimezone(
-                    client_timezone
-                ).replace(hour=0, minute=0, second=0, microsecond=0)
+                start_range = (
+                    parse_iso_datetime(date_param)
+                    .astimezone(client_timezone)
+                    .replace(hour=0, minute=0, second=0, microsecond=0)
+                )
                 end_range = start_range + timedelta(days=1)
                 tracks = tracks.filter(
                     start_time__gte=start_range,
@@ -137,30 +93,8 @@ class TrackViewSet(viewsets.ModelViewSet):
             return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
         tracks = tracks.order_by("-start_time")
-        page = self.paginate_queryset(tracks)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
         serializer = self.get_serializer(tracks, many=True)
         return Response(serializer.data)
-
-    def create(self, request):
-        """Create a new track"""
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def destroy(self, request, pk=None):
-        """Delete a track"""
-        try:
-            track = self.get_object()
-            track.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Track.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(["GET"])

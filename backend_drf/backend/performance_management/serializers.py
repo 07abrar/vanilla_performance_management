@@ -68,6 +68,17 @@ class TrackSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
+    def validate(self, attrs):
+        # Fall back to the existing instance values so partial updates that omit
+        # start_time or end_time still validate against the stored times.
+        start = attrs.get("start_time") or getattr(self.instance, "start_time", None)
+        end = attrs.get("end_time") or getattr(self.instance, "end_time", None)
+        if start and end and end <= start:
+            raise serializers.ValidationError(
+                {"end_time": "End time must be after start time."}
+            )
+        return attrs
+
 
 class TrackDetailSerializer(serializers.ModelSerializer):
     """Detailed serializer for Track model with nested user and activity data"""

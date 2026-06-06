@@ -3,7 +3,6 @@ import {
   CreateActivityPayload,
   CreateTrackPayload,
   CreateUserPayload,
-  PaginatedResponse,
   RecapMode,
   RecapOut,
   Track,
@@ -76,17 +75,15 @@ export const apiClient = {
     date?: string;
     start?: string;
     end?: string;
-    page?: number;
     tz_offset?: number;
-  }): Promise<PaginatedResponse<Track>> {
+  }): Promise<Track[]> {
     const search = new URLSearchParams();
     if (params?.date) search.set('date', params.date);
     if (params?.start) search.set('start', params.start);
     if (params?.end) search.set('end', params.end);
-    if (params?.page) search.set('page', String(params.page));
     if (params?.tz_offset !== undefined) search.set('tz_offset', String(params.tz_offset));
     const suffix = search.toString();
-    return request<PaginatedResponse<Track>>(`/tracks${suffix ? `?${suffix}` : ''}`);
+    return request<Track[]>(`/tracks${suffix ? `?${suffix}` : ''}`);
   },
   async createTrack(payload: CreateTrackPayload): Promise<Track> {
     return request<Track>('/tracks', {
