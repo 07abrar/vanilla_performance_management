@@ -134,8 +134,8 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 20,
+    # Pagination is opt-in per viewset (see TrackViewSet) rather than global, so
+    # list endpoints return plain arrays by default.
 }
 
 

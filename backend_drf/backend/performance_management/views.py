@@ -20,9 +20,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    # The frontend expects /users to return a plain array, so disable pagination
-    # and let ModelViewSet provide the default list/create/destroy behavior.
-    pagination_class = None
 
 
 class ActivityViewSet(viewsets.ModelViewSet):
@@ -30,10 +27,6 @@ class ActivityViewSet(viewsets.ModelViewSet):
 
     queryset = Activity.objects.all()
     serializer_class = ActivitySerializer
-    # The frontend expects /activities to return a plain array, so disable
-    # pagination and let ModelViewSet provide the default list/create/destroy
-    # behavior.
-    pagination_class = None
 
 
 class TrackViewSet(viewsets.ModelViewSet):
@@ -74,9 +67,11 @@ class TrackViewSet(viewsets.ModelViewSet):
                 return parsed
 
             if date_param:
-                start_range = parse_iso_datetime(date_param).astimezone(
-                    client_timezone
-                ).replace(hour=0, minute=0, second=0, microsecond=0)
+                start_range = (
+                    parse_iso_datetime(date_param)
+                    .astimezone(client_timezone)
+                    .replace(hour=0, minute=0, second=0, microsecond=0)
+                )
                 end_range = start_range + timedelta(days=1)
                 tracks = tracks.filter(
                     start_time__gte=start_range,
@@ -98,11 +93,6 @@ class TrackViewSet(viewsets.ModelViewSet):
             return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
         tracks = tracks.order_by("-start_time")
-        page = self.paginate_queryset(tracks)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
         serializer = self.get_serializer(tracks, many=True)
         return Response(serializer.data)
 

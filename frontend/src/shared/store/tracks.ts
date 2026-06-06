@@ -9,25 +9,15 @@ interface ResourceState<T> {
   error: string | null;
 }
 
-interface PaginationMeta {
-  count: number;
-  next: string | null;
-  previous: string | null;
-}
-
 interface TracksState extends ResourceState<Track[]> {
-  pagination: PaginationMeta | null;
   selectedDate: string;
-  page: number;
 }
 
 export const tracksState: TracksState = {
   data: [],
   isLoading: false,
   error: null,
-  pagination: null,
-  selectedDate: dayjs().format('YYYY-MM-DD'),
-  page: 1
+  selectedDate: dayjs().format('YYYY-MM-DD')
 };
 
 export function getTracksState(): TracksState {
@@ -38,20 +28,17 @@ export async function loadTracks(options: {
   date?: string;
   start?: string;
   end?: string;
-  page?: number;
   force?: boolean;
 } = {}): Promise<void> {
   if (tracksState.isLoading) return;
   const resolvedDate =
     options.date ?? (options.start || options.end ? undefined : tracksState.selectedDate);
-  const resolvedPage = options.page ?? tracksState.page;
   const shouldForce = options.force ?? true;
   const comparisonDate = resolvedDate ?? tracksState.selectedDate;
   if (
     !shouldForce &&
     tracksState.data.length > 0 &&
-    comparisonDate === tracksState.selectedDate &&
-    resolvedPage === tracksState.page
+    comparisonDate === tracksState.selectedDate
   ) {
     return;
   }
@@ -59,23 +46,16 @@ export async function loadTracks(options: {
   tracksState.error = null;
   notify('tracks');
   try {
-    const response = await apiClient.listTracks({
+    const tracks = await apiClient.listTracks({
       date: resolvedDate,
       start: options.start,
       end: options.end,
-      page: resolvedPage,
       tz_offset: new Date().getTimezoneOffset()
     });
     if (resolvedDate) {
       tracksState.selectedDate = resolvedDate;
     }
-    tracksState.page = resolvedPage;
-    tracksState.pagination = {
-      count: response.count,
-      next: response.next,
-      previous: response.previous
-    };
-    tracksState.data = response.results.sort(
+    tracksState.data = tracks.sort(
       (a, b) => dayjs(b.start_time).valueOf() - dayjs(a.start_time).valueOf()
     );
   } catch (error) {
