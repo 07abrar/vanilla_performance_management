@@ -8,15 +8,11 @@ import {
   loadUsers,
   subscribe,
 } from "shared/store";
+import { CARD_CLASSES } from "shared/ui/classes";
 import { createDateInput } from "shared/ui/dateInput";
 import { createTimePicker, roundToNextQuarterHour } from "shared/ui/timePicker";
 import { createTrackSection } from "features/tracks/createTrackForm";
 import { existingTracksSection } from "features/tracks/existingTracksTable";
-
-// ── Style constants ───────────────────────────────────────────────────────────
-
-const CARD =
-  "bg-surface border border-ring rounded-2xl p-6 shadow-card flex flex-col gap-5";
 
 // ── Local state ───────────────────────────────────────────────────────────────
 
@@ -80,7 +76,7 @@ function tracksPage(
         <h2 class="text-2xl">Tracks</h2>
         <p class="text-muted text-sm">Input what have been done today.</p>
       </div>
-      <section class=${CARD}>
+      <section class=${CARD_CLASSES}>
         ${createTrackSection(state, handlers, controls)}
 
         <div class="h-px bg-ring -mt-1 -mx-6"></div>

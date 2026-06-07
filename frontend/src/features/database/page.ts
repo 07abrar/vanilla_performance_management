@@ -11,24 +11,12 @@ import {
   loadUsers,
   subscribe,
 } from "shared/store";
-
-// ── Style constants ───────────────────────────────────────────────────────────
-
-const CARD =
-  "bg-surface border border-ring rounded-2xl p-6 shadow-card flex flex-col gap-5";
-
-const BTN_BASE =
-  "rounded-full px-4 py-2.5 text-sm font-semibold border border-transparent " +
-  "transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed";
-
-const BTN_PRIMARY =
-  BTN_BASE +
-  " bg-primary text-white border-primary hover:bg-primary-dark" +
-  " disabled:bg-primary-disabled disabled:border-primary-disabled disabled:text-white";
-
-const BTN_DANGER =
-  BTN_BASE +
-  " bg-danger-bg text-danger-fg border-danger-border hover:bg-red-200";
+import {
+  BUTTON_DANGER_CLASSES,
+  BUTTON_PRIMARY_CLASSES,
+  CARD_CLASSES,
+} from "shared/ui/classes";
+import { feedbackMessage } from "shared/ui/feedback";
 
 // ── Local state ───────────────────────────────────────────────────────────────
 
@@ -58,17 +46,6 @@ interface ItemHandlers {
 
 // ── Templates ─────────────────────────────────────────────────────────────────
 
-function feedbackMessage(feedback: ItemState["feedback"]) {
-  const cls = feedback.isError
-    ? "text-sm text-danger-fg"
-    : "text-sm text-teal-700";
-  return html`
-    <p class=${feedback.message ? cls : "text-sm text-muted-strong"}>
-      ${feedback.message ?? ""}
-    </p>
-  `;
-}
-
 function itemsList<T extends Entity>(
   listState: { data: T[]; isLoading: boolean; error: string | null },
   cardState: ItemState,
@@ -96,7 +73,7 @@ function itemsList<T extends Entity>(
           <div class="flex justify-between py-1.5">
             <span>${item.name}</span>
             <button
-              class=${BTN_DANGER}
+              class=${BUTTON_DANGER_CLASSES}
               ?disabled=${cardState.deletingIds.has(item.id)}
               @click=${() => handlers.onDelete(item.id)}
             >
@@ -116,7 +93,7 @@ function itemsListContainer<T extends Entity>(
   handlers: ItemHandlers,
 ) {
   return html`
-    <section class=${CARD}>
+    <section class=${CARD_CLASSES}>
       <div class="flex flex-col gap-1.5">
         <h3 class="text-lg font-semibold">${config.title}</h3>
         <p class="text-muted text-sm">${config.subtitle}</p>
@@ -138,7 +115,7 @@ function itemsListContainer<T extends Entity>(
         />
         <button
           type="submit"
-          class=${BTN_PRIMARY}
+          class=${BUTTON_PRIMARY_CLASSES}
           ?disabled=${cardState.isSubmitting}
         >
           Add

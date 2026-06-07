@@ -3,6 +3,7 @@ import { Track } from "shared/api/types";
 import dayjs from "shared/lib/dayjs";
 import { formatMinutes } from "shared/lib/format";
 import { getActivityName, getTracksState, getUserName } from "shared/store";
+import { BUTTON_DANGER_CLASSES } from "shared/ui/classes";
 import type {
   FormControls,
   FormHandlers,
@@ -12,14 +13,6 @@ import type {
 // ── Style constants ───────────────────────────────────────────────────────────
 
 const CELL = "px-3 py-3 border-b border-ring align-top";
-
-const BTN_BASE =
-  "rounded-full px-4 py-2.5 text-sm font-semibold border border-transparent " +
-  "transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed";
-
-const BTN_DANGER =
-  BTN_BASE +
-  " bg-danger-bg text-danger-fg border-danger-border hover:bg-red-200";
 
 // ── Templates ─────────────────────────────────────────────────────────────────
 
@@ -102,7 +95,7 @@ function tracksTable(state: FormState, handlers: FormHandlers) {
                 </td>
                 <td class="${CELL} text-right">
                   <button
-                    class=${BTN_DANGER}
+                    class=${BUTTON_DANGER_CLASSES}
                     ?disabled=${state.deletingIds.has(track.id)}
                     @click=${() => handlers.onDeleteTrack(track.id)}
                   >

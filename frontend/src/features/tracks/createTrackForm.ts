@@ -1,35 +1,18 @@
 import { html, nothing, TemplateResult } from "lit-html";
 import { getActivitiesState, getUsersState } from "shared/store";
-import { INPUT_CLASSES, SELECT_CLASSES } from "shared/ui/classes";
+import {
+  BUTTON_PRIMARY_CLASSES,
+  INPUT_CLASSES,
+  SELECT_CLASSES,
+} from "shared/ui/classes";
+import { feedbackMessage } from "shared/ui/feedback";
 import type {
   FormControls,
   FormHandlers,
   FormState,
 } from "features/tracks/page";
 
-// ── Style constants ───────────────────────────────────────────────────────────
-
-const BTN_BASE =
-  "rounded-full px-4 py-2.5 text-sm font-semibold border border-transparent " +
-  "transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed";
-
-const BTN_PRIMARY =
-  BTN_BASE +
-  " bg-primary text-white border-primary hover:bg-primary-dark" +
-  " disabled:bg-primary-disabled disabled:border-primary-disabled disabled:text-white";
-
 // ── Templates ─────────────────────────────────────────────────────────────────
-
-function feedbackMessage(feedback: FormState["feedback"]) {
-  const cls = feedback.isError
-    ? "text-sm text-danger-fg"
-    : "text-sm text-teal-700";
-  return html`
-    <p class=${feedback.message ? cls : "text-sm text-muted-strong"}>
-      ${feedback.message ?? ""}
-    </p>
-  `;
-}
 
 function fieldWrapper(
   label: string,
@@ -152,7 +135,11 @@ export function createTrackSection(
         </div>
       </div>
       <div class="flex justify-end">
-        <button type="submit" class=${BTN_PRIMARY} ?disabled=${state.isSubmitting}>
+        <button
+          type="submit"
+          class=${BUTTON_PRIMARY_CLASSES}
+          ?disabled=${state.isSubmitting}
+        >
           Create track
         </button>
       </div>

@@ -3,22 +3,13 @@ import { html, render } from "lit-html";
 import { RecapEntry, RecapMode, RecapOut } from "shared/api/types";
 import dayjs from "shared/lib/dayjs";
 import { getRecapState, loadRecap, subscribe } from "shared/store";
-import { INPUT_CLASSES, SELECT_CLASSES } from "shared/ui/classes";
+import {
+  BUTTON_PRIMARY_CLASSES,
+  CARD_CLASSES,
+  INPUT_CLASSES,
+  SELECT_CLASSES,
+} from "shared/ui/classes";
 import { createDateInput } from "shared/ui/dateInput";
-
-// ── Style constants ───────────────────────────────────────────────────────────
-
-const CARD =
-  "bg-surface border border-ring rounded-2xl p-6 shadow-card flex flex-col gap-5";
-
-const BTN_BASE =
-  "rounded-full px-4 py-2.5 text-sm font-semibold border border-transparent " +
-  "transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed";
-
-const BTN_PRIMARY =
-  BTN_BASE +
-  " bg-primary text-white border-primary hover:bg-primary-dark" +
-  " disabled:bg-primary-disabled disabled:border-primary-disabled disabled:text-white";
 
 // ── Local state ───────────────────────────────────────────────────────────────
 
@@ -116,7 +107,7 @@ function controlSection(
 ) {
   const isLoading = getRecapState().isLoading;
   return html`
-    <section class=${CARD}>
+    <section class=${CARD_CLASSES}>
       <div class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
         <label class="flex flex-col gap-1.5">
           <span class="text-sm font-semibold text-muted-strong">View</span>
@@ -145,7 +136,7 @@ function controlSection(
         </div>
         <div class="col-span-full flex justify-end mt-1">
           <button
-            class=${BTN_PRIMARY}
+            class=${BUTTON_PRIMARY_CLASSES}
             ?disabled=${isLoading}
             @click=${handlers.onRefresh}
           >
@@ -242,10 +233,10 @@ function recapBody(canvasEl: HTMLCanvasElement) {
   return html`
     ${summaryLine(data)}
     <div class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6">
-      <div class=${CARD}>
+      <div class=${CARD_CLASSES}>
         <div class="relative w-full h-chart">${canvasEl}</div>
       </div>
-      <div class=${CARD}>${entriesTable(data.entries)}</div>
+      <div class=${CARD_CLASSES}>${entriesTable(data.entries)}</div>
     </div>
   `;
 }
@@ -264,7 +255,7 @@ function recapPage(
         <p class="text-muted text-sm">Shows the conclusion of user activity.</p>
       </div>
       ${controlSection(state, handlers, dailyDateEl, weekStartEl)}
-      <section class=${CARD}>${recapBody(canvasEl)}</section>
+      <section class=${CARD_CLASSES}>${recapBody(canvasEl)}</section>
     </div>
   `;
 }
