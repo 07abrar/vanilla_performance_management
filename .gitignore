@@ -178,6 +178,9 @@ Thumbs.db
 *.bak
 *.backup
 *.old
+backup.json
+db\ copy.sqlite3
+secret.txt
 
 # Log files
 *.log
