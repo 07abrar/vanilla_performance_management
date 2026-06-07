@@ -54,7 +54,7 @@ export function createTrackSection(
     </div>
     <form class="track-form" autocomplete="off" @submit=${handlers.onSubmit}>
       <div class="flex flex-col gap-4">
-        <div class="flex gap-2">
+        <div class="flex flex-col gap-2 sm:flex-row">
           ${fieldWrapper(
             "Start date",
             controls.startDate,
@@ -87,7 +87,7 @@ export function createTrackSection(
             state.errors.user,
           )}
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-col gap-2 sm:flex-row">
           ${fieldWrapper("End date", controls.endDate, state.errors.endDate)}
           ${fieldWrapper("End time", controls.endTimePicker, state.errors.end)}
           ${fieldWrapper(
@@ -116,7 +116,7 @@ export function createTrackSection(
             state.errors.activity,
           )}
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-col gap-2 sm:flex-row">
           ${fieldWrapper(
             "Comment",
             html`<textarea
