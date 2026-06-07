@@ -1,5 +1,5 @@
 import { apiClient } from 'shared/api/client';
-import { Activity, CreateActivityPayload } from 'shared/api/types';
+import { CreateActivityPayload, Entity } from 'shared/api/types';
 import { notify } from './subscribe';
 
 interface ResourceState<T> {
@@ -8,13 +8,13 @@ interface ResourceState<T> {
   error: string | null;
 }
 
-export const activitiesState: ResourceState<Activity[]> = {
+export const activitiesState: ResourceState<Entity[]> = {
   data: [],
   isLoading: false,
   error: null
 };
 
-export function getActivitiesState(): ResourceState<Activity[]> {
+export function getActivitiesState(): ResourceState<Entity[]> {
   return activitiesState;
 }
 

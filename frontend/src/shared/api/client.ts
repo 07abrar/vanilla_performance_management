@@ -1,12 +1,11 @@
 import {
-  Activity,
   CreateActivityPayload,
   CreateTrackPayload,
   CreateUserPayload,
+  Entity,
   RecapMode,
   RecapOut,
   Track,
-  User
 } from './types';
 
 const BASE_URL = 'http://localhost:8000/api';
@@ -45,11 +44,11 @@ async function extractErrorMessage(response: Response): Promise<string> {
 }
 
 export const apiClient = {
-  async listUsers(): Promise<User[]> {
-    return request<User[]>('/users');
+  async listUsers(): Promise<Entity[]> {
+    return request<Entity[]>('/users');
   },
-  async createUser(payload: CreateUserPayload): Promise<User> {
-    return request<User>('/users', {
+  async createUser(payload: CreateUserPayload): Promise<Entity> {
+    return request<Entity>('/users', {
       method: 'POST',
       body: JSON.stringify(payload)
     });
@@ -58,11 +57,11 @@ export const apiClient = {
     await request<void>(`/users/${id}`, { method: 'DELETE' });
   },
 
-  async listActivities(): Promise<Activity[]> {
-    return request<Activity[]>('/activities');
+  async listActivities(): Promise<Entity[]> {
+    return request<Entity[]>('/activities');
   },
-  async createActivity(payload: CreateActivityPayload): Promise<Activity> {
-    return request<Activity>('/activities', {
+  async createActivity(payload: CreateActivityPayload): Promise<Entity> {
+    return request<Entity>('/activities', {
       method: 'POST',
       body: JSON.stringify(payload)
     });

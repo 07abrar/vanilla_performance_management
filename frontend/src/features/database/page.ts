@@ -1,4 +1,5 @@
 import { html, render } from "lit-html";
+import { Entity } from "shared/api/types";
 import {
   createActivity,
   createUser,
@@ -68,11 +69,7 @@ function feedbackMessage(feedback: ItemState["feedback"]) {
   `;
 }
 
-// TODO : create interface Entity {
-//   id: number;
-//   name: string;
-// }
-function itemsList<T extends { id: number; name: string }>(
+function itemsList<T extends Entity>(
   listState: { data: T[]; isLoading: boolean; error: string | null },
   cardState: ItemState,
   handlers: ItemHandlers,
@@ -112,7 +109,7 @@ function itemsList<T extends { id: number; name: string }>(
   `;
 }
 
-function itemsListContainer<T extends { id: number; name: string }>(
+function itemsListContainer<T extends Entity>(
   config: { title: string; subtitle: string; placeholder: string },
   listState: { data: T[]; isLoading: boolean; error: string | null },
   cardState: ItemState,

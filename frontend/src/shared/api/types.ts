@@ -1,9 +1,4 @@
-export interface User {
-  id: number;
-  name: string;
-}
-
-export interface Activity {
+export interface Entity {
   id: number;
   name: string;
 }
