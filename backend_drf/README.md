@@ -9,24 +9,30 @@ This document walks through how the backend inside `backend_drf/` is assembled s
 
 Install the runtime dependencies:
 ```bash
-python -m pip install django==5.1.3 djangorestframework==3.15.2 django-cors-headers==4.3.1
+python -m pip install django==5.2.7 djangorestframework==3.16.1 django-cors-headers==4.9.0
 ```
 
 ## 2. Project Layout
 ```
 backend_drf/
-├── backend/                  # Django project folder (settings, root URLs, manage.py)
-│   ├── backend/              # Project package
+├── backend/                  # Django project root (manage.py lives here)
+│   ├── manage.py             # Django command runner
+│   ├── db.sqlite3            # SQLite database (local dev)
+│   ├── requirements.txt      # Python dependencies
+│   ├── Procfile              # gunicorn deploy entry point
+│   ├── .env                  # Local environment variables (not committed)
+│   ├── backend/              # Django config package
 │   │   ├── settings.py       # Global configuration, apps, REST and CORS settings
 │   │   ├── urls.py           # Entry point that includes the app URLs under /api/
-│   │   └── wsgi.py/asgi.py   # Server entry points
-│   ├── manage.py             # Django command runner
+│   │   ├── wsgi.py           # WSGI server entry point
+│   │   └── asgi.py           # ASGI server entry point
 │   └── performance_management/
 │       ├── models.py         # User, Activity, Track database tables
 │       ├── serializers.py    # Translate models ⇄ JSON payloads
 │       ├── views.py          # ViewSets + recap API logic
 │       ├── urls.py           # Router wiring for REST endpoints
 │       └── migrations/       # Database schema history
+├── venv/                     # Virtual environment (not committed)
 └── README.md                 # This guide
 ```
 
@@ -80,4 +86,4 @@ Repeat this loop whenever you add new resources.
 - Add new fields to a model, regenerate migrations, and watch the serializer changes propagate to the API.
 - Experiment with serializer validation (e.g., enforce `end_time > start_time`).
 - Implement pagination or filtering on the viewsets to understand DRF extras.
-- Connect the running backend to the React/Vite frontend in the repository to see the full stack working together.
+- Connect the running backend to the vanilla TypeScript/Vite frontend in the repository to see the full stack working together.
