@@ -1,5 +1,3 @@
-# NOTE: DRF serializers translate Django model instances into JSON responses (and back again).
-#       Keep the fields list in sync with the frontend types so data flows smoothly between layers.
 from rest_framework import serializers
 from .models import User, Activity, Track
 

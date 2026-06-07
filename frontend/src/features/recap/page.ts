@@ -40,12 +40,9 @@ function createFilterState(): FilterState {
 // ── Handler shape ─────────────────────────────────────────────────────────────
 
 interface FilterHandlers {
-  // Called when the view mode select changes
   onModeChange: (value: RecapMode) => void;
-  // Called when year/month number inputs change (monthly mode only)
   onYearChange: (value: number) => void;
   onMonthChange: (value: number) => void;
-  // Called when the Refresh button is clicked
   onRefresh: () => void;
 }
 
@@ -376,7 +373,6 @@ export function renderRecapView(container: HTMLElement): () => void {
     },
   };
 
-  // Initial render
   update();
   triggerLoad();
 

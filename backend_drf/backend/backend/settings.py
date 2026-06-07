@@ -18,8 +18,7 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables from a local .env file if present. Missing file is
-# fine — the settings below keep working dev defaults so the app still boots.
+# Load environment variables from a local .env file if present.
 load_dotenv(BASE_DIR / ".env")
 
 
@@ -30,8 +29,7 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# NOTE: Compare the raw string to "True"; never use bool() on the env value
-#       because bool("False") is truthy.
+# Compared as a string because bool("False") would be truthy.
 DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = (
@@ -50,7 +48,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # NOTE: Add project-specific apps below so Django loads their models, serializers, and URLs.
     "rest_framework",
     "corsheaders",
     "performance_management",
@@ -58,7 +55,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "corsheaders.middleware.CorsMiddleware",  # NOTE: Place CORS middleware near the top
+    "corsheaders.middleware.CorsMiddleware",  # Must run before CommonMiddleware
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -139,7 +136,6 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# NOTE: REST_FRAMEWORK centralizes configuration for permissions, rendering, and pagination
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.AllowAny",
@@ -147,25 +143,19 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
-    # Pagination is opt-in per viewset (see TrackViewSet) rather than global, so
-    # list endpoints return plain arrays by default.
 }
 
 
-# NOTE: CORS settings allow the Vite/React frontend to call the API while developing locally.
+# Origins allowed to call the API from the frontend dev/preview servers.
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React default
-    "http://localhost:5173",  # Vite default
-    "http://127.0.0.1:5173",  # Alternative localhost for Vite
-    # NOTE: configure CORS_ALLOWED_ORIGINS as needed for the frontend URL
-    "http://localhost:4173",  # Vite preview
-    "http://127.0.0.1:4173",  # Alternative localhost for preview
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
 ]
-# For development only - allows all origins
-# CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
-# NOTE: Adjust headers/methods to match the requests your frontend issues.
 CORS_ALLOWED_HEADERS = [
     "accept",
     "accept-encoding",

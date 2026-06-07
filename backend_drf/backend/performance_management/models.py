@@ -1,12 +1,7 @@
 from django.db import models
 
-# NOTE: These Django models mirror the TypeScript interfaces that power the frontend UI.
-#       Matching field names between backend and frontend reduces friction when exchanging
-#       JSON payloads and makes serialization straightforward to follow.
-
-
-# NOTE: User/Activity/Track are intentionally lightweight so we can focus on DRF basics
-#       (CRUD endpoints, relationships, and serialization) without extra business logic.
+# Field names mirror the frontend TypeScript interfaces so JSON payloads map
+# directly between the two layers.
 
 
 class User(models.Model):
@@ -61,9 +56,3 @@ class Track(models.Model):
     def duration(self):
         """Calculate duration in seconds"""
         return (self.end_time - self.start_time).total_seconds()
-
-
-# NOTE: After editing these models, create the database tables with:
-#       python manage.py makemigrations
-#       python manage.py migrate
-#       These commands store the model structure in migrations and apply them to SQLite.

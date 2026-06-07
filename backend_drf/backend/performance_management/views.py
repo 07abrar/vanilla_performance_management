@@ -1,7 +1,5 @@
 """View logic for the performance management API."""
 
-# NOTE: Each viewset below handles CRUD for a model. DRF wires them to URLs via routers,
-#       which keeps our code concise while still exposing REST-style endpoints.
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -100,11 +98,7 @@ class TrackViewSet(viewsets.ModelViewSet):
 @api_view(["GET"])
 def recap_view(request, mode):
     """Aggregate Track data for recap charts consumed by the frontend dashboard."""
-    # NOTE: This function-based view walks through date range parsing, querying, and
-    #       aggregation step-by-step so you can trace how raw Track rows become a
-    #       summarized payload for the UI.
     try:
-        # Get query parameters
         date_param = request.GET.get("date")
         week_start_param = request.GET.get("week_start")
         year_param = request.GET.get("year")
@@ -186,8 +180,7 @@ def recap_view(request, mode):
         start_range = start_local.astimezone(dt_timezone.utc)
         end_range = end_local.astimezone(dt_timezone.utc)
 
-        # NOTE: Querying with select_related keeps the number of database hits low when
-        #       we later access track.user or track.activity in the aggregation loop.
+        # select_related avoids per-row queries when accessing user/activity below.
         tracks = Track.objects.filter(
             start_time__gte=start_range, start_time__lt=end_range
         ).select_related("user", "activity")
@@ -199,7 +192,6 @@ def recap_view(request, mode):
         for track in tracks:
             activity_id = track.activity.id
             activity_name = track.activity.name
-            # Calculate duration in minutes
             duration_minutes = (
                 track.end_time - track.start_time
             ).total_seconds() / 60.0
