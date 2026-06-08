@@ -150,11 +150,6 @@ REST_FRAMEWORK = {
 
 # Origins allowed to call the API from the frontend dev/preview servers.
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:4173",
-    "http://127.0.0.1:4173",
     "https://vanillaperformancemanagement-production.up.railway.app",
 ]
 CORS_ALLOW_CREDENTIALS = True
