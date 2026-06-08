@@ -151,6 +151,7 @@ REST_FRAMEWORK = {
 # Origins allowed to call the API from the frontend dev/preview servers.
 CORS_ALLOWED_ORIGINS = [
     "https://vanillaperformancemanagement-production.up.railway.app",
+    "https://vanilla-performance-management.vercel.app",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
