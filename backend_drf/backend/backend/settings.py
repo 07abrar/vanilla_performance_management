@@ -152,6 +152,7 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "https://vanillaperformancemanagement-production.up.railway.app",
     "https://vanilla-performance-management.vercel.app",
+    "http://localhost:5173",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
