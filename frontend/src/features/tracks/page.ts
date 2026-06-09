@@ -9,6 +9,7 @@ import {
   subscribe,
 } from "shared/store";
 import { CARD_CLASSES } from "shared/ui/classes";
+import { confirmDelete } from "shared/ui/confirmDialog";
 import { createDateInput } from "shared/ui/dateInput";
 import { createTimePicker, roundToNextQuarterHour } from "shared/ui/timePicker";
 import { createTrackSection } from "features/tracks/createTrackForm";
@@ -212,9 +213,10 @@ export function renderTracksView(container: HTMLElement): () => void {
 
     async onDeleteTrack(id) {
       if (state.deletingIds.has(id)) return;
+      const confirmed = await confirmDelete("this track");
+      if (!confirmed) return;
 
       state.deletingIds.add(id);
-      // Clear any stale "Track created!" feedback
       state.feedback = { message: null, isError: false };
       update();
 

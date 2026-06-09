@@ -16,6 +16,7 @@ import {
   BUTTON_PRIMARY_CLASSES,
   CARD_CLASSES,
 } from "shared/ui/classes";
+import { confirmDelete } from "shared/ui/confirmDialog";
 import { feedbackMessage } from "shared/ui/feedback";
 
 // ── Local state ───────────────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ function createCardState(): ItemState {
 interface ItemHandlers {
   onInput: (value: string) => void;
   onSubmit: (e: Event) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: number, name: string) => void;
 }
 
 // ── Templates ─────────────────────────────────────────────────────────────────
@@ -75,7 +76,7 @@ function itemsList<T extends Entity>(
             <button
               class=${BUTTON_DANGER_CLASSES}
               ?disabled=${cardState.deletingIds.has(item.id)}
-              @click=${() => handlers.onDelete(item.id)}
+              @click=${() => handlers.onDelete(item.id, item.name)}
             >
               Delete
             </button>
@@ -226,8 +227,10 @@ export function renderDatabaseView(container: HTMLElement): () => void {
       }
     },
 
-    async onDelete(id) {
+    async onDelete(id, name) {
       if (usersState.deletingIds.has(id)) return;
+      const confirmed = await confirmDelete(`"${name}"`);
+      if (!confirmed) return;
 
       usersState.deletingIds.add(id);
       usersState.feedback = { message: null, isError: false };
@@ -284,8 +287,10 @@ export function renderDatabaseView(container: HTMLElement): () => void {
       }
     },
 
-    async onDelete(id) {
+    async onDelete(id, name) {
       if (activitiesState.deletingIds.has(id)) return;
+      const confirmed = await confirmDelete(`"${name}"`);
+      if (!confirmed) return;
 
       activitiesState.deletingIds.add(id);
       activitiesState.feedback = { message: null, isError: false };
